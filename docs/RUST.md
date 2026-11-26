@@ -2,9 +2,9 @@
 
 | Crate | Role |
 | --- | --- |
-| `crates/antelope-crypto-format` | K1 `is_canonical`, `sig_digest`, `tx_id`, locked counts |
+| `crates/antelope-crypto-format` | K1 `is_canonical`, locked counts, `sig_digest`, `tx_id` |
 
-**No** DKLs23 / CGGMP24 / WASM threshold engines in this workspace yet. Those are Phase **R.2** and stay behind the same `deny.toml` firewall.
+**No** DKLs23 / CGGMP24 / WASM threshold engines in this workspace yet. Those are Phase **R.2** and must still pass the same `deny.toml` firewall.
 
 ## Commands
 
@@ -15,22 +15,32 @@ cargo clippy -p antelope-crypto-format --all-targets -- -D warnings
 cargo deny check
 ```
 
-Shared vectors: [testdata/vectors.json](../testdata/vectors.json) (Jungle 4 digest + canonical counts).
+CI: [`.github/workflows/rust.yml`](../.github/workflows/rust.yml) (test + clippy + cargo-deny). Toolchain pin: [rust-toolchain.toml](../rust-toolchain.toml).
+
+Shared vectors: [testdata/vectors.json](../testdata/vectors.json) (Jungle 4 digest + canonical counts). TypeScript loads the same file in `src/vectors.test.ts`.
 
 ## Deny policy (summary)
 
-- Allow: MIT, Apache-2.0, BSD, ISC, Zlib, Unicode-3.0, CC0-1.0  
-- Deny crates: `rug`, `gmp-mpfr-sys`, `cggmp21`  
-- Unknown registries / git sources: deny  
+| Rule | Effect |
+| --- | --- |
+| Allow licenses | MIT, Apache-2.0, BSD, ISC, Zlib, Unicode-3.0, CC0-1.0 |
+| Deny crates | `rug`, `gmp-mpfr-sys`, `cggmp21` |
+| Sources | Unknown registries / git denied |
 
-See root [deny.toml](../deny.toml).
+Full file: [deny.toml](../deny.toml).
 
 ## Parity with TypeScript
 
 | Check | TS | Rust |
 | --- | --- | --- |
 | Component canonical | `canonical.ts` | `component_is_canonical` |
-| Counts 32640 / 65025 | `CANONICAL_COUNTS` | `counts::*` |
-| Jungle 4 sig digest | `digest.ts` | `sig_digest` test |
+| Counts 32640 / 65025 / 197119 | `CANONICAL_COUNTS` | `counts::*` |
+| Jungle 4 sig digest + tx id | `digest.ts` | `sig_digest` / `tx_id` tests |
 
-Threshold signing remains out of scope until an audited-or-bannered R.2 engine lands under testnet policy.
+## What R.1 is not
+
+- Not a threshold signer
+- Not a substitute for WharfKit session flows
+- Not permission to mainnet
+
+Threshold signing remains out of scope until an audited-or-bannered R.2 engine lands under testnet policy. See [ENGINE.md](ENGINE.md).
