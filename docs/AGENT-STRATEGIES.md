@@ -2,6 +2,8 @@
 
 An agent that can act on Antelope is an agent that can propose a narrow action, have that proposal checked by something that is not the model, and then obtain a signature that the network will accept. The signature is one 65-byte value. The network does not see how many parties helped produce it.
 
+The callable catalog is [src/strategies.ts](../src/strategies.ts). `runStrategy("wax-testnet-tip", from, now)` is the move an agent can run today. The other ids are the refusals. See [STRATEGIES.md](STRATEGIES.md).
+
 ## Three share roles
 
 | Share | Where it lives | What it can do alone |
@@ -21,7 +23,7 @@ These are the only tools the blueprint's MCP server exposes. None of them hold a
 3. **Propose a transfer** — Send a chain id, a recipient alias, an amount, and a short memo. The policy gate resolves the alias. Free-typed account names are refused.
 4. **Check status** — Ask whether the gate auto-approved the proposal or escalated it to a human.
 
-`src/policy.ts` is the local stand-in for tool 3. It refuses mainnet, refuses `updateauth`, refuses a memo that contains an account name, and refuses amounts over the cap. A later lab can wrap the same checks behind an MCP server.
+`src/policy.ts` is the local stand-in for tool 3. `src/strategies.ts` is the catalog of named moves that call it. The lab signer in `src/labsign.ts` is a fifth, local step: it signs after an allow, with a throwaway key, and it is not one of these four tools. Do not expose it as an MCP tool that accepts a digest.
 
 ## Per-chain opportunities
 
@@ -29,21 +31,21 @@ The same proposal shape works on every Antelope network. What changes is the cha
 
 | Network | Token | What an agent can usefully do today |
 | --- | --- | --- |
-| WAX Testnet | WAX | Propose a transfer to a faucet or a test peer. Practice the gate. |
-| Jungle 4 | A / EOS | Same as WAX Testnet. The published digest vector in this course is from here. |
-| WAX Mainnet | WAX | Pay for AtomicAssets actions, tip, or move WAXP once the gate is widened and the account is funded. |
-| Vaulta | A | Transfer A, interact with REX or RAM markets, once the gate allows the chain id. |
-| Telos | TLOS | Transfer TLOS or call a Telos-native contract the gate has allow-listed. |
-| XPR Network | XPR | Transfer XPR or call a Proton contract the gate has allow-listed. |
-| UX | UX | Transfer UX once the gate allows the chain id. |
+| WAX Testnet | WAX | `wax-testnet-tip`. The gate allows it and the lab key signs. |
+| Jungle 4 | A | `jungle-tip`. Same loop, paid in A. |
+| WAX Mainnet | WAX | `wax-mainnet-tip` is refused. Pay or move an NFT only after an operator adds the chain id. |
+| Vaulta | A | `vaulta-tip` is refused. RAM and REX stay behind a human. |
+| Telos | TLOS | `telos-tip` is refused until the chain id is added. |
+| XPR Network | XPR | `xpr-tip` is refused until the chain id is added. Same id as Proton. |
+| UX | UX | `ux-tip` is refused until the chain id is added. |
 
-The policy gate in this course currently only allows the two lab testnets. Adding a mainnet is a configuration change: put the chain id in the allow-list, give the agent an alias that resolves to a real account, and keep the blocked-action list.
+The policy gate currently only allows the two lab testnets, and only with the matching symbol. Adding a mainnet is a configuration change: put the chain id in the allow-list, give the agent an alias that resolves to a real account, and keep the blocked-action list.
 
 ## Cross-chain
 
 An agent that holds a secp256k1 share can, in principle, produce a signature for any chain that accepts secp256k1. Antelope, Ethereum, and Bitcoin Taproot (via FROST, not ECDSA) are different signature formats and different digest rules. This course locks the Antelope digest and the K1 canonical check. It does not produce an Ethereum transaction or a Bitcoin signature.
 
-If the same key material is used on more than one chain, the policy gate must be told which chain id is allowed for which action. A transfer on WAX must not be replayable on Telos. The chain id inside the signing digest is what prevents that replay. Do not strip it.
+`wax-testnet-tip` and `jungle-tip` do not share a proposal id. A real signing digest would differ too, because the chain id is inside `SHA-256(chain_id || packed_transaction || cfd_hash)`. Do not strip it. A WAX transfer must not be replayable on Telos.
 
 ## What the agent must not do
 
