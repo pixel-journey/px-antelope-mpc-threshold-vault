@@ -1,35 +1,30 @@
 # Antelope MPC, without a mainnet signer
 
-> **Status:** educational reference for agentic payments on Antelope. Unaudited.  
-> Default gate: WAX Testnet + Jungle 4. **Mainnets hard-refused.**  
-> **No threshold WASM** (Phase R.2). **No HTTP push by default** ([docs/PUSH.md](docs/PUSH.md)).  
-> **R.1:** Rust `antelope-crypto-format` + `deny.toml` only — [docs/RUST.md](docs/RUST.md).  
-> **Done vs remains:** [docs/GAP-AUDIT.md](docs/GAP-AUDIT.md).
-
-## Agent path (TypeScript)
+> Educational agent-payments + Antelope MPC course. **Unaudited.**  
+> Mainnets refused. **No threshold WASM sign.** **No HTTP push by default.**  
+> **Educational completion:** [docs/COMPLETION.md](docs/COMPLETION.md) · **Gaps:** [docs/GAP-AUDIT.md](docs/GAP-AUDIT.md)
 
 ```bash
 npm test && npm run check-skills
+# optional: cargo test -p antelope-crypto-format
 ```
 
 ```ts
-import { runStrategyTool, listStrategiesTool } from "./src/mcp.js";
-listStrategiesTool({ expect: "allow" });
+import { runStrategyTool, listEnginesTool } from "./src/mcp.js";
 runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
+listEnginesTool();
 ```
 
-## Format path (Rust)
+Optional lab network (explicit):
 
-```bash
-cargo test -p antelope-crypto-format
+```ts
+import { fetchLabChainInfo } from "./src/labClient.js";
+import { CHAINS } from "./src/digest.js";
+await fetchLabChainInfo(CHAINS.waxTestnet, { enableNetwork: true });
 ```
-
-K1 canonical counts and Jungle 4 digest parity with the TS course. **Still no MPC signing crates.**
 
 ## Docs
 
-[TODAY](docs/TODAY.md) · [GAP-AUDIT](docs/GAP-AUDIT.md) · [AGENT-RECIPE](docs/AGENT-RECIPE.md) · [PUSH](docs/PUSH.md) · [RUST](docs/RUST.md) · [ATTACK-MUSEUM](docs/ATTACK-MUSEUM.md)
+[TODAY](docs/TODAY.md) · [COMPLETION](docs/COMPLETION.md) · [AGENT-RECIPE](docs/AGENT-RECIPE.md) · [PUSH](docs/PUSH.md) · [ENGINE](docs/ENGINE.md) · [RUST](docs/RUST.md) · [EDUCATION](EDUCATION.md)
 
-WharfKit **4.0.2**. Naive K1 fail rate ~**75.2%** (uniform-byte model).
-
-MIT. Pixel Journey.
+WharfKit **4.0.2**. MIT. Pixel Journey.
