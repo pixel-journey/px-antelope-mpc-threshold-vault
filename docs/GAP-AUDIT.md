@@ -1,44 +1,46 @@
 # Gap audit — external review vs live tree (2026-11-26)
 
-An external review (Gemini) judged the repo from the **public description** only
-(“No threshold signing. No broadcast. Unaudited.”). That description is still
-true for **production threshold + broadcast**. It understates the educational
-surface already in this tree.
+Description-only reviews understate the tree. Source of truth for done vs remains.
 
 ## Corrected status
 
-| Component | External claim | Live tree |
-| --- | --- | --- |
-| Honesty banner / MIT / TS | Done | Done |
-| WharfKit 4.0.2 vector recovery | Done | Done |
-| Network map + mainnet lock | Needs guardrail | **Done** — policy, lab signer, `broadcast.ts`, MCP `broadcast_status` |
-| Real Rust/WASM threshold ECDSA | Missing (P0) | **Intentionally missing** — mock only |
-| K1 canonical / presign / R1 | “Conceptual” | **Executable** |
-| WalletPluginMPC | Missing | **Stub + refuse paths** |
-| Policy engine + kill | Missing | **Done** |
-| Attack museum | Missing | **Done** |
-| MCP proposal tools | Missing | **Done** (9 tools incl. simulate + broadcast_status) |
-| Local compute_transaction stand-in | Missing | **Done** — `simulate.ts` (no RPC) |
-| Agent skills | Missing | **5 skills** under `skills/` |
-| Opt-in extra testnets + lab sig | — | **Done** |
-| Hybrid permission shapes / codecs | — | **Done** |
-| Agentic payments curriculum | Positioned | **Expanded** `AGENTIC-PAYMENTS.md` |
-| Relay / Vault / WebAuthn / Next.js | Missing | Design / not started |
+| Component | Live tree |
+| --- | --- |
+| Honesty banner / MIT / TS / WharfKit 4.0.2 vectors | Done |
+| Network map + **mainnet** lock | Done (`policy`, `labsign`, `broadcast`) |
+| Push as **curriculum end-stage** (checklist + URL builder; no HTTP by default) | Done ([PUSH.md](PUSH.md)) |
+| K1 canonical / presign / R1 | Executable |
+| Policy + kill + strategies + operator testnets | Done |
+| Offline `compute_transaction` fixtures + `TransactionSimulator` | Done (`simulate.ts`) |
+| MCP tools (9) | Done |
+| Attack museum cards + toy demos | Done (`MUSEUM_CARDS`, nonce / `$` delimiter) |
+| Agent skills (5) + Tier-2 linter + workflow | Done |
+| Lab RPC catalog | Done (`rpc.ts`) |
+| WalletPlugin stub | Educational refuse paths |
+| Real Rust/WASM threshold | **Intentionally missing** (Phase R) |
+| Live plugin + HTTP testnet push | Phase W |
+| Relay / Vault / WebAuthn / Next.js | Not started |
 
-## Integrated agent path (today)
+## Integrated agent path
 
-`list → run_strategy / propose → simulate_proposal → broadcast_status`  
-Lab SIG optional after allow. `wouldBroadcast` always false. See [AGENT-RECIPE.md](AGENT-RECIPE.md).
+```text
+list_networks / list_strategies
+  → propose_transfer | run_strategy (+ optional extraLabChainIds)
+  → simulate_proposal (clean | inline-escalation | assert-revert)
+  → lab SIG_K1_ (proposal id only — not pushable)
+  → evaluatePushReadiness → buildPushTransactionRequest (URL only until Phase W)
+```
 
-## What remains (honest backlog)
+Mainnet never. HTTP push only after checklist + deliberate sender.
+
+## Backlog
 
 | Phase | Work |
 | --- | --- |
-| **R** | Cargo workspace, DKLs23 + CGGMP24 WASM, `cargo-deny`, benchmarks |
-| **W** | Live `AbstractWalletPlugin`, real RPC `compute_transaction`, opt-in **testnet** push after lock |
-| **A** | Mock x402 facilitator lab, deeper KYA/escrow demos |
-| **I** | Relay, Vault co-signer, WebAuthn PRF, server-down recovery test |
-| **U** | Next.js lab, skill CI validate, deeper PQ module |
+| **R.1** | Cargo workspace + `deny.toml` + `antelope-crypto-format` parity (**no** MPC crates) |
+| **R.2** | DKLs23 / CGGMP24 WASM behind trait, still testnet-bannered |
+| **W** | Live WalletPlugin + optional lab `fetch` for compute/push under readiness |
+| **A / I / U** | x402 mock, relay/Vault/PRF, Next.js lab |
 
 ## Non-negotiables
 
