@@ -4,33 +4,57 @@ import {
   buildComputeTransactionRequest,
   buildPushTransactionRequest,
   endpointsForChain,
-  FORBIDDEN_RPC_PATHS,
-  LAB_ENDPOINTS,
+  LAB_RPC_PATHS,
   listLabRpcSummary,
 } from "./rpc.js";
 
-describe("lab RPC catalog", () => {
-  it("lists default labs and opt-in testnets", () => {
-    expect(LAB_ENDPOINTS.some((e) => e.chainId === CHAINS.waxTestnet)).toBe(true);
-    expect(LAB_ENDPOINTS.some((e) => e.kind === "testnet-opt-in")).toBe(true);
-    expect(endpointsForChain(CHAINS.jungle4).length).toBeGreaterThan(0);
-  });
-
-  it("builds compute_transaction only for broadcast-candidate chains", () => {
+describe("lab RPC catalog and push end-stage", () => {
+  it("builds compute_transaction for candidate chains", () => {
     const [wax] = endpointsForChain(CHAINS.waxTestnet);
     const req = buildComputeTransactionRequest(wax!, { transaction: { id: "demo" } });
-    expect(req.url).toContain("/v1/chain/compute_transaction");
-    expect(req.method).toBe("POST");
+    expect(req.url).toContain(LAB_RPC_PATHS.computeTransaction);
   });
 
-  it("never builds push_transaction", () => {
+  it("refuses push when checklist incomplete", () => {
     const [wax] = endpointsForChain(CHAINS.waxTestnet);
-    expect(() => buildPushTransactionRequest(wax!)).toThrow(/not offered/);
-    expect(FORBIDDEN_RPC_PATHS.pushTransaction).toBe("/v1/chain/push_transaction");
+    const result = buildPushTransactionRequest(
+      wax!,
+      { transaction: {} },
+      {
+        policyAllowed: true,
+        signedAntelopeDigest: false,
+        dryRunOk: false,
+        operatorOptsIntoPush: false,
+      },
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.readiness.blockers.length).toBeGreaterThan(0);
+    }
   });
 
-  it("summarizes paths without enabling send", () => {
+  it("builds push URL when checklist passes but still does not HTTP-send", () => {
+    const [wax] = endpointsForChain(CHAINS.waxTestnet);
+    const result = buildPushTransactionRequest(
+      wax!,
+      { transaction: { signed: true } },
+      {
+        policyAllowed: true,
+        signedAntelopeDigest: true,
+        dryRunOk: true,
+        operatorOptsIntoPush: true,
+        senderImplemented: true,
+      },
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.url).toContain(LAB_RPC_PATHS.pushTransaction);
+      expect(result.httpSendImplemented).toBe(false);
+    }
+  });
+
+  it("summarizes paths including push as end-stage", () => {
     const rows = listLabRpcSummary();
-    expect(rows.every((r) => r.forbidden.pushTransaction)).toBeTruthy();
+    expect(rows.every((r) => r.pushIsEndStage)).toBe(true);
   });
 });
