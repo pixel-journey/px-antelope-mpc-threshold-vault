@@ -21,6 +21,7 @@ This repository is the reading course and the byte-level lab for that idea. It i
 | [docs/AGENT-RECIPE.md](docs/AGENT-RECIPE.md) | The path an agent can run today: pick a lab network, propose, sign with the lab key |
 | [docs/LAB-SIGNER.md](docs/LAB-SIGNER.md) | A throwaway lab key that signs an allowed proposal and can be recovered |
 | [docs/WITHOUT-WHARFKIT.md](docs/WITHOUT-WHARFKIT.md) | What you still have to get right if the agent cannot use the WharfKit packages |
+| [docs/STRATEGIES.md](docs/STRATEGIES.md) | Named moves an agent can run today, including the ones the gate refuses |
 | [docs/AGENT-STRATEGIES.md](docs/AGENT-STRATEGIES.md) | Three share roles, four tools an agent may call, and per-chain opportunities |
 | [docs/PROTOCOL-GENERATIONS.md](docs/PROTOCOL-GENERATIONS.md) | GG18/GG20, CGGMP24, DKLs23, and the 2025–2026 class-group protocols |
 | [docs/K1-CANONICAL.md](docs/K1-CANONICAL.md) | The byte check, low-S, the recovery-id flip, and r-filtering |
@@ -39,7 +40,7 @@ This repository is the reading course and the byte-level lab for that idea. It i
 npm test
 ```
 
-Twenty-eight tests. Node 22 was used when they were last run. `@wharfkit/antelope` and `@wharfkit/session` are pinned at **4.0.2** (BSD-3-Clause). `@noble/curves` is used only inside the nonce-reuse fixture.
+Thirty-two tests. Node 22 was used when they were last run. `@wharfkit/antelope` and `@wharfkit/session` are pinned at **4.0.2** (BSD-3-Clause). `@noble/curves` is used only inside the nonce-reuse fixture.
 
 ## The number the tests lock
 
@@ -80,7 +81,7 @@ Defaults, if you later build a signer, stay on testnets:
 | WAX Testnet | `f16b1833c747c43682f4386fca9cbb327929334a762755ebec17f6f23c9b8a12` |
 | Jungle 4 | `73e4385a2708e6d7048834fbc1079f2fabb17b3c125b146af438971e90716c4d` |
 
-WAX mainnet, Vaulta (`aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906`), and Telos mainnet are in the source as ids the policy gate refuses. `@wharfkit/session` 4.0.2 also carries Telos Testnet, Proton, Proton Testnet, and UX. Those ids are now read from `Chains` in the tests. The policy gate still does not select them. Proton and XPR are the same chain id in that package. Vaulta and EOS are the same chain id.
+WAX mainnet, Vaulta (`aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906`), and Telos mainnet are in the source as ids the policy gate refuses. `@wharfkit/session` 4.0.2 also carries Telos Testnet, Proton, Proton Testnet, and UX. Those ids are now in `CHAINS` and in `PLAYBOOKS`. The policy gate still does not select them. Proton and XPR are the same chain id in that package. Vaulta and EOS are the same chain id.
 
 ## Related courses
 
