@@ -8,12 +8,14 @@ On Antelope the signature is one 65-byte ECDSA value. The network does not see t
 
 1. Agent picks a strategy or builds a proposal (chain id, `eosio.token::transfer`, alias, amount, memo, TTL).
 2. `policy.ts` / `runStrategy` decides. Mainnets refused. Cap, memo, and blocked actions enforced.
-3. On allow: handoff record + optional **lab** `SIG_K1_` (not a node-accepted packed-tx digest).
-4. **Not implemented here:** real co-signer ceremony, `compute_transaction`, `push_transaction`.
+3. On allow: handoff record + optional **lab** `SIG_K1_` over a **proposal id** (not a node-accepted packed-tx digest).
+4. Offline simulate fixtures (clean / inline-escalation / revert).
+5. Optional lab HTTP: `get_info` or **gated** `push_transaction` only when readiness flags are honest and `enableNetwork: true`.
+6. **Not implemented:** real multi-party co-signer ceremony (Phase R.2).
 
-Callable today: [TODAY.md](TODAY.md) · [STRATEGIES.md](STRATEGIES.md) · [MCP-TOOLS.md](MCP-TOOLS.md).
+Callable today: [TODAY.md](TODAY.md) · [STRATEGIES.md](STRATEGIES.md) · [MCP-TOOLS.md](MCP-TOOLS.md) · [PUSH.md](PUSH.md).
 
-Broadcast is locked: [src/broadcast.ts](../src/broadcast.ts) — mainnets never; even candidate testnets hit `refuseBroadcast`.
+Mainnets never. Default path has no sockets. Lab push is opt-in and checklist-gated: [src/labClient.ts](../src/labClient.ts).
 
 ---
 
@@ -45,8 +47,6 @@ Shapes: [PERMISSIONS.md](PERMISSIONS.md) · `hybridCustodyPlan` in `src/permissi
 
 ## Machine payments: discrete vs continuous
 
-Two patterns dominate late-2026 agent payment design discussions:
-
 | Pattern | Idea | Fit |
 | --- | --- | --- |
 | **HTTP payment challenges** (e.g. x402-style `402` + payment headers) | One resource, one settlement or escrow leg | Discrete API calls, fixed or “up to” caps |
@@ -58,10 +58,11 @@ This course does **not** implement an x402 facilitator or a channel server. It t
 - chain-id-bound digests
 - linked agent permissions
 - no blind `sign_digest`
+- no model-fired push
 
-A local mock facilitator is backlog (Phase A in [GAP-AUDIT.md](GAP-AUDIT.md)), not a claim that this repo speaks HTTP 402 today.
+A local mock facilitator is backlog (Phase A in [GAP-AUDIT.md](GAP-AUDIT.md)).
 
-**Industry volume figures** circulating in secondary writeups should be verified against primary sources before you cite them in a paper or pitch. This file intentionally does not pin contested transaction counts.
+**Industry volume figures** circulating in secondary writeups should be verified against primary sources before you cite them. This file intentionally does not pin contested transaction counts.
 
 ---
 
@@ -70,21 +71,22 @@ A local mock facilitator is backlog (Phase A in [GAP-AUDIT.md](GAP-AUDIT.md)), n
 | Concern | Course posture |
 | --- | --- |
 | **Know Your Agent** | Bind agent identity to an Antelope `account@permission` and a human-owned policy config; do not let the model edit caps |
-| **Structured denial** | Gate returns `reason` strings agents can branch on (`strategies` refusals are the catalog) |
+| **Structured denial** | Gate returns `reason` strings agents can branch on |
 | **Kill switch** | `policy.kill()` in-memory; production needs cold-owner `updateauth` / `unlinkauth` ready offline |
-| **No chargebacks** | Prefer escrow or staged release for irreversible API work — see Pixel Journey [wax-escrowed-merch-custody-timeline](https://github.com/pixel-journey/wax-escrowed-merch-custody-timeline) for the custody mental model |
+| **No chargebacks** | Prefer escrow or staged release for irreversible API work — see [wax-escrowed-merch-custody-timeline](https://github.com/pixel-journey/wax-escrowed-merch-custody-timeline) |
 
 ---
 
 ## What the agent must not do
 
 - Trust a digest someone else hashed
-- Use a tx id / block id / `orng.wax` as a signing nonce
+- Use a tx id / block id / `orng.wax` as a signing nonce ([ENTROPY.md](ENTROPY.md))
 - Hold the only share
 - Call `updateauth` / `setcode` from the agent path
 - Skip the gate because the model sounds sure
-- Broadcast from this educational tree
+- Set `operatorOptsIntoPush` or claim `signedAntelopeDigest` for a lab proposal-id signature
+- Treat mainnet as a lab
 
 ## Across networks
 
-Same proposal shape on WAX, Jungle 4, Telos, XPR, Vaulta, UX. Default gate: two labs. Operator: `extraLabChainIds` for more **testnets** only. See [NETWORKS.md](NETWORKS.md).
+Same proposal shape on WAX, Jungle 4, Telos, XPR, Vaulta, UX. Default gate: two labs. Operator: `extraLabChainIds` for more **testnets** only. See [NETWORKS.md](NETWORKS.md) · [CHAIN-OPPORTUNITIES.md](CHAIN-OPPORTUNITIES.md).
