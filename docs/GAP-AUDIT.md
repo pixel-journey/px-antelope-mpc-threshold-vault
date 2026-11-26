@@ -2,11 +2,12 @@
 
 | Layer | Status |
 | --- | --- |
-| **Educational course** (agent loop, crypto labs, museum, skills, push curriculum) | **Complete** — [COMPLETION.md](COMPLETION.md) |
+| Educational agent + crypto course | **Complete** |
+| Gated lab `get_info` + `push_transaction` | **Complete** (`labClient`, readiness required) |
 | R.1 Rust format + deny | **Done** |
-| Optional lab `get_info` client | **Done** (`labClient.ts`, opt-in) |
-| R.2 real threshold WASM | Not started |
-| W HTTP push + live WalletPlugin | Not started |
-| Relay / Vault / PRF / UI | Not started |
+| R.2 real threshold WASM sign | Not started |
+| Live WalletPlugin | Not started |
+| Push as MCP tool | **Intentionally omitted** |
+| Relay / Vault / UI | Not started |
 
-Banner still accurate for production claims: **No threshold signing. No HTTP push by default. Unaudited.**
+Production banner still applies to **threshold signing** and **mainnet**: unaudited; no R.2 engine in-tree.
