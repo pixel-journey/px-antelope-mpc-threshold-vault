@@ -3,3 +3,7 @@ dist
 *.log
 .env
 .env.*
+target/
+**/*.rs.bk
+.idea/
+.vscode/
