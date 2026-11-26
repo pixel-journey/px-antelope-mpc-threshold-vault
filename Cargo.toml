@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = ["crates/antelope-crypto-format"]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+version = "0.1.0"
+authors = ["Pixel Journey"]
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
