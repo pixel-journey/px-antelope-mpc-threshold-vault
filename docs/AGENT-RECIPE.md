@@ -1,62 +1,56 @@
 # A recipe an agent can run today
 
-This is the path an agent can run today. The lab signer produces a recoverable SIG_K1_ after the gate allows the proposal. It does not broadcast, and it is not a threshold share.
+End-to-end path without broadcast and without a threshold share.
 
-## 1. Pick a network
+## 1. List what is allowed
 
 ```ts
-import { PLAYBOOKS } from "./playbooks.js";
+import { listNetworks, listStrategiesTool, broadcastStatus } from "./mcp.js";
 
-const lab = PLAYBOOKS.filter((entry) => entry.kind === "lab");
-// WAX Testnet and Jungle 4. Mainnets are listed and refused.
+listStrategiesTool({ expect: "allow" }); // four default lab tips
+listNetworks(); // includes broadcast evaluation per chain
+broadcastStatus(chainId); // mainnets locked; course still never sends
 ```
 
-Do not paste a chain id from a chat. Read it from `PLAYBOOKS` or from `CHAINS` in `src/digest.ts`.
-
-## 2. Propose
+## 2. Propose (or run a named strategy)
 
 ```ts
-import { createPolicy } from "./policy.js";
+import { runStrategyTool, proposeTransfer, resetSessionPolicy } from "./mcp.js";
 import { CHAINS } from "./digest.js";
 
-const policy = createPolicy();
 const now = Math.floor(Date.now() / 1000);
-const decision = policy.propose({
-  chainId: CHAINS.waxTestnet,
-  contract: "eosio.token",
-  action: "transfer",
-  alias: "wax-faucet",
-  amountUnits: 10000n, // 1.0000 WAX
-  symbol: "WAX",
-  memo: "agent tip",
-  nowSec: now,
-  expiresAtSec: now + 60,
+const tip = runStrategyTool("wax-testnet-tip", "agent.pxj", now);
+// tip.decision.ok, tip.lab.signature (lab SIG_K1_ over proposal id)
+
+// Operator-only extra testnet:
+runStrategyTool("telos-testnet-tip", "agent.pxj", now, {
+  extraLabChainIds: [CHAINS.telosTestnet],
 });
 ```
 
-`decision.ok` is true only when the chain is a lab, the alias is known, the amount is under the cap, the memo is short ASCII, and the action is `eosio.token::transfer`. `decision.account` is the resolved name. The model never typed that name.
+Or build a proposal by hand with `proposeTransfer` / `createPolicy()`.
 
-## 3. Stop or continue
-
-If `decision.ok` is false, stop. Do not rewrite the proposal to sneak past the reason. If `decision.ok` is true, either sign with the lab key in step 5, or hand the bound fields to a co-signer that packs the real transaction.
-
-## 4. What not to add
-
-- A function that accepts a digest the model computed.
-- A free-typed recipient.
-- `updateauth` as a tool.
-- A mainnet chain id, unless an operator has already widened `LAB_CHAIN_IDS` and told you.
-
-See [MCP-TOOLS.md](MCP-TOOLS.md) for the four-tool shape and [TODAY.md](TODAY.md) for what else is callable.
-
-## 5. Sign with the lab key
+## 3. Local simulate (not nodeos)
 
 ```ts
-import { createLabKey, signAllowed, recoverLab } from "./labsign.js";
+import { simulateProposal } from "./mcp.js";
 
-const key = createLabKey();
-const signed = signAllowed(key, proposal, decision, "agent.pxj");
-recoverLab(signed) === signed.publicKey; // true on a lab chain
+simulateProposal(proposal, decision);
+// policyOk, wouldBroadcast: false, recommendedRpc: /v1/chain/compute_transaction
 ```
 
-`signed.signature` is a real `SIG_K1_`. It is over the proposal id, not over a packed transaction. A node will not accept it. See [docs/LAB-SIGNER.md](LAB-SIGNER.md).
+A production stack would call real `compute_transaction` on a **lab** RPC after this.
+
+## 4. Stop conditions
+
+- `decision.ok === false` → stop; do not rewrite to sneak past the reason  
+- Never accept a model-computed digest  
+- Never free-type a recipient  
+- Never treat lab `SIG_K1_` as a pushable transaction signature  
+- `refuseBroadcast` / `wouldBroadcast: false` — this course does not push  
+
+## 5. What comes later (not this tree)
+
+Real co-signer WASM, live WalletPlugin, authenticated relay, opt-in testnet `push_transaction` after `assertBroadcastAllowed`.
+
+See [TODAY.md](TODAY.md) · [MCP-TOOLS.md](MCP-TOOLS.md) · [AGENTIC-PAYMENTS.md](AGENTIC-PAYMENTS.md) · [GAP-AUDIT.md](GAP-AUDIT.md).
