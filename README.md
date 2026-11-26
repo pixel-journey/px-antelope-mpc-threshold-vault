@@ -26,6 +26,7 @@ This repository is the reading course and the byte-level lab for that idea. It i
 | [docs/ATTACK-MUSEUM.md](docs/ATTACK-MUSEUM.md) | Nonce reuse, concatenation collisions, and the Paillier proof gaps |
 | [docs/POST-QUANTUM.md](docs/POST-QUANTUM.md) | What Antelope can verify today, and what would need a new key type |
 | [docs/CHAIN-OPPORTUNITIES.md](docs/CHAIN-OPPORTUNITIES.md) | Per-chain actions an agent can propose once the gate allows the chain id |
+| [docs/HANDOFF.md](docs/HANDOFF.md) | The record an agent hands a co-signer, and why that record is not a signing digest |
 | [docs/TODAY.md](docs/TODAY.md) | What a developer or an agent can call in this repository right now |
 | [docs/PERMISSIONS.md](docs/PERMISSIONS.md) | owner, active, and a linked agent permission |
 | [docs/MCP-TOOLS.md](docs/MCP-TOOLS.md) | The four calls an agent may make, and the fields the policy gate accepts |
@@ -37,7 +38,7 @@ This repository is the reading course and the byte-level lab for that idea. It i
 npm test
 ```
 
-Twenty-three tests. Node 22 was used when they were last run. `@wharfkit/antelope` and `@wharfkit/session` are pinned at **4.0.2** (BSD-3-Clause). `@noble/curves` is used only inside the nonce-reuse fixture.
+Twenty-five tests. Node 22 was used when they were last run. `@wharfkit/antelope` and `@wharfkit/session` are pinned at **4.0.2** (BSD-3-Clause). `@noble/curves` is used only inside the nonce-reuse fixture.
 
 ## The number the tests lock
 
