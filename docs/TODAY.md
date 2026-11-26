@@ -1,50 +1,42 @@
 # What a developer or an agent can use today
 
-This repository does not broadcast. The lab signer produces a recoverable SIG_K1_ on a lab chain. It is not a threshold share. The pieces below are usable now.
+This repository does not broadcast. The lab signer produces a recoverable SIG_K1_ on a lab chain. It is not a threshold share.
 
 ## For an agent (right now)
 
 ```ts
-import { runStrategyTool, listNetworks, listStrategiesTool, checkStatus } from "./mcp.js";
+import { runStrategyTool, listNetworks, listStrategiesTool } from "./mcp.js";
+import { createPolicy } from "./policy.js";
+import { CHAINS } from "./digest.js";
+import { parseSignature, VECTOR_JUNGLE_SIG_K1 } from "./codec.js";
 import { PresignQueue, componentBytes } from "./presign.js";
 import { hybridCustodyPlan } from "./permissions.js";
 import { recommendCurve } from "./curve.js";
-import { pluginSign, pluginLogin } from "./walletPlugin.js";
 
-const tip = runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
-listNetworks();
-listStrategiesTool({ expect: "allow" });
+runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
+listStrategiesTool({ expect: "allow" }); // four default lab allows
+
+// Operator-only: more testnets (never mainnet)
+createPolicy({ extraLabChainIds: [CHAINS.telosTestnet] });
+
+parseSignature(VECTOR_JUNGLE_SIG_K1); // 65-byte body + recid
 recommendCurve(); // "R1"
 ```
 
 | Surface | Module |
 | --- | --- |
 | MCP-shaped tools | `mcp.ts` |
-| Named strategies / playbooks | `strategies.ts` · `playbooks.ts` |
-| Policy gate | `policy.ts` |
-| Lab sign after allow | `labsign.ts` |
-| Presign queue policy | `presign.ts` |
+| Strategies / playbooks | `strategies.ts` · `playbooks.ts` |
+| Policy (+ optional extra testnets) | `policy.ts` |
+| PUB_/SIG_ codec | `codec.ts` |
+| Presign queue | `presign.ts` |
 | Hybrid permission shapes | `permissions.ts` |
-| R1-preferred curves | `curve.ts` |
-| WalletPlugin stub (refuses live MPC sign) | `walletPlugin.ts` |
-| Canonical / digest / museum | `canonical.ts` · `digest.ts` · `museum.ts` |
+| Curve preference | `curve.ts` |
+| WalletPlugin stub | `walletPlugin.ts` |
+| Lab sign after allow | `labsign.ts` |
 
-**Four allows today:** `wax-testnet-tip`, `treasury-tip`, `jungle-tip`, `peer-tip`.
+## Still out of scope
 
-## For a developer
-
-- `@wharfkit/session` **4.0.2** recovers published vectors and sorts authorities.
-- [WALLET-PLUGIN.md](WALLET-PLUGIN.md) is the contract for a future real plugin.
-- [K1-CANONICAL.md](K1-CANONICAL.md) + presign tests before any K1 signer.
-- [ARCHITECTURE.md](../ARCHITECTURE.md) for the hybrid thesis.
-
-## Still out of scope (by design)
-
-| Item | Why |
-| --- | --- |
-| Real DKLs23 / CGGMP24 WASM | Unaudited orchestration must not hold mainnet funds |
-| Live WalletPlugin co-sign | Stub refuses until a reviewed engine is wired |
-| Default mainnet gate | Operator decision |
-| `sign_digest` tool | Blind hashing is a CVE class |
+Real threshold WASM, live plugin co-sign, mainnet in the default gate, `sign_digest` tools.
 
 Run `npm test`.
