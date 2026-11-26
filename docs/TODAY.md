@@ -1,47 +1,54 @@
 # What a developer or an agent can use today
 
-This repository does not broadcast. The lab signer produces a recoverable SIG_K1_ on built-in lab chains only. It is not a threshold share.
+No broadcast. No threshold share. Lab `SIG_K1_` is over a proposal id only.
 
-## For an agent (right now)
+## Integrated agent path
 
 ```ts
-import { runStrategyTool, listStrategiesTool } from "./mcp.js";
-import { runStrategyWithPolicy, operatorOptInStrategies } from "./strategies.js";
-import { createPolicy } from "./policy.js";
+import {
+  listStrategiesTool,
+  runStrategyTool,
+  simulateProposal,
+  broadcastStatus,
+  checkStatus,
+} from "./mcp.js";
 import { CHAINS } from "./digest.js";
-import { parseSignature, VECTOR_JUNGLE_SIG_K1 } from "./codec.js";
-import { PresignQueue, componentBytes } from "./presign.js";
-import { hybridCustodyPlan } from "./permissions.js";
-import { recommendCurve } from "./curve.js";
 
-runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
-listStrategiesTool({ expect: "allow" }); // four default lab allows
+listStrategiesTool({ expect: "allow" });
+const tip = runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
+// simulate with the same proposal/decision fields the strategy used internally as needed
+broadcastStatus(CHAINS.waxMainnet); // ok: false
+checkStatus(); // broadcasts: false
 
-operatorOptInStrategies(); // telos-testnet-tip, xpr-testnet-tip
-runStrategyWithPolicy("telos-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000), {
+runStrategyTool("telos-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000), {
   extraLabChainIds: [CHAINS.telosTestnet],
-}); // allow + handoff; lab sig null
-
-parseSignature(VECTOR_JUNGLE_SIG_K1);
-recommendCurve(); // "R1"
+});
 ```
 
 | Surface | Module |
 | --- | --- |
-| MCP tools | `mcp.ts` |
-| Strategies + operator opt-in | `strategies.ts` |
+| MCP tools (9) | `mcp.ts` |
+| Strategies + opt-in | `strategies.ts` |
 | Policy | `policy.ts` |
+| Lab sign | `labsign.ts` |
+| Local simulate | `simulate.ts` |
+| Broadcast lock | `broadcast.ts` |
 | PUB_/SIG_ codec | `codec.ts` |
 | Presign queue | `presign.ts` |
-| Hybrid permission shapes | `permissions.ts` |
+| Permissions shapes | `permissions.ts` |
 | Curve preference | `curve.ts` |
 | WalletPlugin stub | `walletPlugin.ts` |
-| Lab sign (built-in labs only) | `labsign.ts` |
 
-## Still out of scope
+## Skills
 
-Real threshold WASM, live plugin co-sign, relay implementation, mainnet in the default gate, `sign_digest` tools.
+- `skills/antelope-agent-propose`
+- `skills/antelope-agentic-payments`
+- `skills/antelope-mpc-sig-format`
+- `skills/mpc-security-audit`
+- `skills/antelope-network-scope`
 
-Relay design notes: [RELAY.md](RELAY.md).
+## Docs map
+
+[GAP-AUDIT.md](GAP-AUDIT.md) · [AGENT-RECIPE.md](AGENT-RECIPE.md) · [AGENTIC-PAYMENTS.md](AGENTIC-PAYMENTS.md) · [MCP-TOOLS.md](MCP-TOOLS.md)
 
 Run `npm test`.
