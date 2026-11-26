@@ -1,6 +1,6 @@
 # Attack museum
 
-Structured cards (also exported as `MUSEUM_CARDS` in `src/museum.ts`). Executable demos only for **nonce reuse** and **transcript delimiter collisions** on throwaway numbers — never against live vendor binaries.
+Structured cards (also exported as `MUSEUM_CARDS` in [src/museum.ts](../src/museum.ts)). Executable demos only for **nonce reuse** and **transcript delimiter collisions** on throwaway numbers — never against live vendor binaries.
 
 ## Boss fight: Antelope K1 `is_canonical`
 
@@ -15,9 +15,9 @@ See [K1-CANONICAL.md](K1-CANONICAL.md). Offline r-filter + low-S + `recid ^= 1` 
 | bitforge-lindell | CVE-2023-33242 | Non-compliant abort leaks bits | Spec-accurate aborts | No Lindell17 |
 | tssshock-transcript | CVE-2022-47931 / 26556 | Ambiguous FS delimiters; weak DLN k | Length prefixes; k ≥ 80–128 | `taggedHash` / `$` collision demo |
 | nonce-reuse | Classical HNP | Reused ephemeral k | CSPRNG only; never chain entropy | `recoverFromReusedNonce` |
-| cggmp-66016 | CVE-2025-66016 | Missing Jacobi in aux keygen | cggmp24 ≥ 0.7.0-alpha.2 when engines land | Ban cggmp21 in future deny.toml |
+| cggmp-66016 | CVE-2025-66016 | Missing Jacobi in aux keygen | cggmp24 ≥ 0.7.0-alpha.2 when engines land | Ban cggmp21 in deny.toml |
 | cggmp-66017 | CVE-2025-66017 | Presign + raw digest / HD misuse | Type guards; no `sign_digest` tool | MCP + hygiene |
-| ops-ai-bypass | Custody & agent incidents | No crypto break required | Independent shares; linkauth; policy | Gate + readiness |
+| ops-ai-bypass | Custody & agent incidents | No crypto break required | Independent shares; linkauth; policy | Gate + readiness; no free recipients |
 
 ### Executable demos
 
@@ -27,11 +27,22 @@ import {
   dollarDelimiterCollides,
   taggedHash,
   smashedHash,
+  MUSEUM_CARDS,
 } from "./museum.js";
 
 dollarDelimiterCollides(); // true — why "$" join is unsafe
 taggedHash(["ab", "c"]) !== taggedHash(["a", "bc"]);
+MUSEUM_CARDS.map((c) => c.id);
 ```
+
+Nonce reuse recovers `x` from two signatures with the same `k`:
+
+\\[
+k = (m_1 - m_2)(s_1 - s_2)^{-1} \bmod n,\quad
+x = r^{-1}(s_1 k - m_1) \bmod n
+\\]
+
+Never seed MPC nonces from tx/block hashes or `orng.wax` ([ENTROPY.md](ENTROPY.md)).
 
 ## Simulation is not inclusion
 
@@ -39,4 +50,6 @@ taggedHash(["ab", "c"]) !== taggedHash(["a", "bc"]);
 
 ## What is not re-implemented
 
-Full BitForge modulus recovery, live TSSHOCK against a vendor binary, and CVE-2025-66017 against a real presign API require vulnerable code. Described for auditors only.
+Full BitForge modulus recovery, live TSSHOCK against a vendor binary, and CVE-2025-66017 against a real presign API require vulnerable code. Described for auditors only — not reproduced here.
+
+[PROTOCOL-GENERATIONS.md](PROTOCOL-GENERATIONS.md) · [THREAT_MODEL.md](THREAT_MODEL.md) · [ENGINE.md](ENGINE.md)
