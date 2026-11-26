@@ -1,0 +1,15 @@
+[package]
+name = "antelope-crypto-format"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Educational Antelope K1 canonical checks and signing digests (no threshold signing)"
+
+[dependencies]
+sha2 = { version = "0.10", default-features = false }
+
+[dev-dependencies]
+hex = "0.4"
+
+[lints]
+workspace = true
