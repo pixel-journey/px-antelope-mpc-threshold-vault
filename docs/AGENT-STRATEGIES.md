@@ -2,7 +2,16 @@
 
 An agent that can act on Antelope is an agent that can propose a narrow action, have that proposal checked by something that is not the model, and then obtain a signature that the network will accept. The signature is one 65-byte value. The network does not see how many parties helped produce it.
 
-The callable catalog is [src/strategies.ts](../src/strategies.ts). `runStrategy("wax-testnet-tip", from, now)` is the move an agent can run today. The other ids are the refusals. See [STRATEGIES.md](STRATEGIES.md).
+The callable catalog is [src/strategies.ts](../src/strategies.ts). `runStrategy("wax-testnet-tip", from, now)` is one of four allows today. The other ids are refusals the agent can list and learn from. See [STRATEGIES.md](STRATEGIES.md).
+
+```ts
+import { listStrategyIds, runStrategy, strategiesByTag } from "../src/strategies.js";
+import { defaultGateActions, PLAYBOOKS } from "../src/playbooks.js";
+
+listStrategyIds();
+strategiesByTag("lab");
+defaultGateActions();
+```
 
 ## Three share roles
 
@@ -20,32 +29,28 @@ These are the only tools the blueprint's MCP server exposes. None of them hold a
 
 1. **Inspect** — Read an account's permissions, `linkauth` bindings, and CPU/NET/RAM. No write.
 2. **Decode and simulate** — Unpack an action and ask a node what the balance deltas would be. No write.
-3. **Propose a transfer** — Send a chain id, a recipient alias, an amount, and a short memo. The policy gate resolves the alias. Free-typed account names are refused.
+3. **Propose a transfer** — Send a chain id, a recipient alias, an amount, and a short memo. The policy gate resolves the alias. Free-typed account names are refused. Named moves: `runStrategy`.
 4. **Check status** — Ask whether the gate auto-approved the proposal or escalated it to a human.
 
-`src/policy.ts` is the local stand-in for tool 3. `src/strategies.ts` is the catalog of named moves that call it. The lab signer in `src/labsign.ts` is a fifth, local step: it signs after an allow, with a throwaway key, and it is not one of these four tools. Do not expose it as an MCP tool that accepts a digest.
+`src/policy.ts` is the local stand-in for tool 3. The lab signer in `src/labsign.ts` is a fifth, local step: it signs after an allow, with a throwaway key, and it is not one of these four tools. Do not expose it as an MCP tool that accepts a digest.
 
-## Per-chain opportunities
+## Per-chain opportunities (summary)
 
-The same proposal shape works on every Antelope network. What changes is the chain id, the system token, and the contracts an agent is allowed to call.
-
-| Network | Token | What an agent can usefully do today |
+| Network | Token | Callable strategy today |
 | --- | --- | --- |
-| WAX Testnet | WAX | `wax-testnet-tip`. The gate allows it and the lab key signs. |
-| Jungle 4 | A | `jungle-tip`. Same loop, paid in A. |
-| WAX Mainnet | WAX | `wax-mainnet-tip` is refused. Pay or move an NFT only after an operator adds the chain id. |
-| Vaulta | A | `vaulta-tip` is refused. RAM and REX stay behind a human. |
-| Telos | TLOS | `telos-tip` is refused until the chain id is added. |
-| XPR Network | XPR | `xpr-tip` is refused until the chain id is added. Same id as Proton. |
-| UX | UX | `ux-tip` is refused until the chain id is added. |
+| WAX Testnet | WAX | `wax-testnet-tip`, `treasury-tip` |
+| Jungle 4 | A | `jungle-tip`, `peer-tip` |
+| WAX / Vaulta / Telos / XPR / UX mainnets | varies | Catalogued as `*-tip` refusals until an operator opens the chain |
+| Other testnets (Telos, XPR) | varies | Catalogued refusals (`telos-testnet-tip`, `xpr-testnet-tip`) |
+| AtomicAssets / system / DEX shapes | — | In playbooks + strategy catalog; all refused by default |
 
-The policy gate currently only allows the two lab testnets, and only with the matching symbol. Adding a mainnet is a configuration change: put the chain id in the allow-list, give the agent an alias that resolves to a real account, and keep the blocked-action list.
+Full tables: [CHAIN-OPPORTUNITIES.md](CHAIN-OPPORTUNITIES.md). Machine-readable: [src/playbooks.ts](../src/playbooks.ts).
 
 ## Cross-chain
 
 An agent that holds a secp256k1 share can, in principle, produce a signature for any chain that accepts secp256k1. Antelope, Ethereum, and Bitcoin Taproot (via FROST, not ECDSA) are different signature formats and different digest rules. This course locks the Antelope digest and the K1 canonical check. It does not produce an Ethereum transaction or a Bitcoin signature.
 
-`wax-testnet-tip` and `jungle-tip` do not share a proposal id. A real signing digest would differ too, because the chain id is inside `SHA-256(chain_id || packed_transaction || cfd_hash)`. Do not strip it. A WAX transfer must not be replayable on Telos.
+Lab tips on different chains do not share a proposal id. A real signing digest would differ too, because the chain id is inside `SHA-256(chain_id || packed_transaction || cfd_hash)`. Do not strip it.
 
 ## What the agent must not do
 
