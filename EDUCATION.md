@@ -1,149 +1,119 @@
 # Education — threshold signatures on an account that is not a key
 
-> **Rung:** `npm test` runs [src/course.test.ts](src/course.test.ts).  
-> **The test is the rule** for the byte counts, the checksum, the digest, and the policy gate. Everything else in this file is reading, with a source next to it.
+> **Rung:** `npm test` locks the byte counts, codecs, digests, policy gate, strategies, presign queue, and plugin refusals.  
+> **The test is the rule** for those facts. This file is the reading path around them.
 
 ## What you should be able to do
 
 | Level | After this file |
 | --- | --- |
 | Beginner | Say why an Antelope account can change its active key without moving an NFT |
-| Intermediate | Predict whether a 65-byte K1 signature will pass `is_canonical`, and why R1 is different |
-| Masterclass | Explain why a presignature must be thrown away on retry, and why a policy gate is not a prompt |
+| Intermediate | Predict K1 `is_canonical`, why R1 is different, and how the presign queue burns a bad slot |
+| Masterclass | Explain hybrid owner/active, operator `extraLabChainIds`, and why a relay must not hold a share |
+
+## What this repository runs today
+
+| Surface | Module |
+| --- | --- |
+| Agent strategies + MCP tools | `strategies.ts`, `mcp.ts` |
+| Policy gate (optional extra *testnets*) | `policy.ts` |
+| Lab `SIG_K1_` after allow | `labsign.ts` |
+| PUB_/SIG_ encode-parse | `codec.ts` |
+| Presign r-filter / burn / refresh | `presign.ts` |
+| Prefer R1 online | `curve.ts` |
+| Hybrid `updateauth` / `linkauth` shapes | `permissions.ts` |
+| WalletPlugin stub (refuses live MPC sign) | `walletPlugin.ts` |
+| Canonical counts + low-S | `canonical.ts` |
+| Signing digest | `digest.ts` |
+
+Four default allows: `wax-testnet-tip`, `treasury-tip`, `jungle-tip`, `peer-tip`.  
+Operator opt-in: `runStrategyWithPolicy("telos-testnet-tip", …, { extraLabChainIds: [CHAINS.telosTestnet] })` — allow + handoff, no lab signature until the lab signer is extended.
+
+Deep links: [docs/TODAY.md](docs/TODAY.md) · [docs/STRATEGIES.md](docs/STRATEGIES.md) · [docs/MCP-TOOLS.md](docs/MCP-TOOLS.md) · [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ---
 
 ## Agentic payments
 
-An agent that can pay on Antelope proposes a transfer, has that proposal checked by something that is not the model, and then produces a signature the network will accept. The signature is one 65-byte value. The network does not see how many parties helped produce it. That is why a threshold scheme is useful: the agent can hold one share, a policy service can hold another, and a human can hold the third.
+An agent proposes a transfer; something that is **not** the model decides; a signature the network accepts may follow. The network sees one 65-byte value, not the roster.
 
-See [docs/AGENTIC-PAYMENTS.md](docs/AGENTIC-PAYMENTS.md) for the loop, [docs/NETWORKS.md](docs/NETWORKS.md) for the chain ids, and [docs/WITHOUT-WHARFKIT.md](docs/WITHOUT-WHARFKIT.md) if the agent cannot load the WharfKit packages.
+```ts
+import { runStrategyTool, listStrategiesTool } from "./src/mcp.js";
+listStrategiesTool({ expect: "allow" });
+runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
+```
+
+See [docs/AGENTIC-PAYMENTS.md](docs/AGENTIC-PAYMENTS.md), [docs/NETWORKS.md](docs/NETWORKS.md), [docs/WITHOUT-WHARFKIT.md](docs/WITHOUT-WHARFKIT.md).
 
 ## Beginner — the account is the name
 
-An Ethereum externally owned account is a hash of one public key. Lose that key, or share it, and the address moves with it. An Antelope account is a 12-character name. `owner`, `active`, and any custom permission are rows you can replace with `eosio::updateauth`. The NFTs and the token balance stay on the name.
+An Ethereum EOA is a hash of one key. An Antelope account is a 12-character name. `owner`, `active`, and custom permissions are rows replaced with `eosio::updateauth`. Balances and NFTs stay on the name.
 
-That is the whole hybrid pattern:
+Hybrid pattern:
 
-- Put one day-to-day public key on `active`. If that key was produced by a threshold scheme, the chain still sees one `PUB_K1_` or `PUB_R1_` and one 65-byte signature.
-- Put a cold 2-of-3 on `owner`, with keys that live on hardware or on a native `eosio.msig` board. If the active key is ever suspect, `owner` rotates it. Nothing is transferred.
-- If a bot needs a narrower door, `eosio::linkauth` binds a custom permission to one contract action. The bot's key is not `active`.
+- **active** — one day-to-day pubkey (possibly MPC aggregate `PUB_K1_` / `PUB_R1_`)
+- **owner** — cold 2-of-3 hardware / `eosio.msig` to rotate active if needed
+- **agent** — `linkauth`-scoped permission, not full active
 
-Native multisig shows every signer on chain, costs RAM and CPU, and waits. A threshold signature hides the roster and finishes in the time your round protocol takes. Use the slow public one for the cold path. Use the fast private one, if you use it at all, for the hot path. Do not skip the cold path because the hot path feels modern.
+Shapes (not broadcast): `hybridCustodyPlan` in `src/permissions.ts`.
 
-This repository does not create either key.
+Native multisig is slow and public; threshold ECDSA is fast and private for the hot path. Do not skip the cold path.
 
-### What threshold ECDSA is hard
+### Why threshold ECDSA is hard
 
-Schnorr's signing equation is linear in the secret, which is why FROST (RFC 9591) can add partial signatures. BLS signatures add as well. Antelope's Savanna finality uses BLS12-381 for blocks. Antelope **account** authorities do not accept BLS or Schnorr. They accept ECDSA on secp256k1 (K1) or secp256r1 (R1), plus WebAuthn (WA) which is also P-256 and is not a place to store a threshold share.
-
-ECDSA is `s = k^{-1} (m + r x) mod n`. Both `k` and `x` are secrets, and they are multiplied. You cannot hand each signer a Shamir share of `x` and ask them to sign locally. Someone would have to rebuild `x`, or the signers need a multiplication protocol (Paillier, oblivious transfer, or Beaver triples). Rebuilding `x` is the Level 1 anti-pattern. [src/museum.ts](src/museum.ts) reconstructs a toy secret on purpose so the test can show the secret coming back.
+Schnorr/FROST is linear; Antelope **account** authorities accept ECDSA on K1 or R1 only (plus WA). ECDSA multiplies secrets `k` and `x`. Shamir-of-`x` alone is not enough — that is the Level 1 anti-pattern (`src/museum.ts`).
 
 ---
 
-## Intermediate — four generations, as a map
+## Intermediate — generations, K1 boss fight, presign
 
-The four generations are written out in [docs/PROTOCOL-GENERATIONS.md](docs/PROTOCOL-GENERATIONS.md). Short version:
+Four generations: [docs/PROTOCOL-GENERATIONS.md](docs/PROTOCOL-GENERATIONS.md). Short map:
 
-These are papers and codebases to read. This course does not run them.
-
-| Generation | What to remember | What not to ship |
+| Generation | Remember | Do not ship |
 | --- | --- | --- |
-| GG18, GG20, Lindell17 | First Paillier threshold ECDSA. BitForge (2023) showed missing range and biprimality checks leaking keys across many wallets. | Do not start a new wallet on these. |
-| CGGMP21 / CGGMP24 | Hardened Paillier proofs, offline preprocessing, one online round. [ePrint 2021/060](https://eprint.iacr.org/2021/060). | [CVE-2025-66016](https://www.cve.org/CVERecord?id=CVE-2025-66016) is a missing ZK check before 0.6.3. The advisory's own mitigation text says to move to cggmp24 0.7.0-alpha.2 or newer. A later advisory, CVE-2025-66017, is about misusing presignatures on raw digests and on BIP-32 tweaks. |
-| DKLs23 | Drops Paillier. Three oblivious-transfer rounds. [ePrint 2023/765](https://eprint.iacr.org/2023/765). The 0xCarbon crates at v0.6.2 are MIT or Apache-2.0 and cover K1 and R1. | Not audited inside this repository. Do not confuse them with silence-laboratories/dkls23, which is a different license. |
-| 2025–2026 two-round work | Trout ([ePrint 2025/1666](https://eprint.iacr.org/2025/1666)) and Twig ([ePrint 2025/1696](https://eprint.iacr.org/2025/1696)) use class groups to get two-round ECDSA. FROST remains the Schnorr tool for Solana and Bitcoin Taproot, not for an Antelope `active` key. | Research. Not an Antelope authority type. |
+| GG18/GG20/Lindell17 | First Paillier TSS; BitForge/TSSHOCK | New wallets |
+| CGGMP24 | Hardened ZK; 1 online round; CVE-2025-66016/66017 | Pre-0.7.0-alpha.2 without review |
+| DKLs23 | OT, no Paillier; MIT/Apache 0xCarbon crates | Unaudited mainnet orchestration |
+| 2025–26 class-group | 2-round research | Not an Antelope authority type |
 
-WebAuthn is a login, not a curve you threshold. A passkey can unlock a local share. The on-chain authority is still `PUB_K1_` or `PUB_R1_`.
+### K1 `is_canonical`
 
----
+Both `r` and `s` need clear high bit and no `0x00` + weak second byte. Uniform-byte model: **75.20%** fail; after offline r-filter + low-S ≈ **99.61%**. Fail leftover → **burn** presign, new nonce — never tweak `k` ([src/presign.ts](src/presign.ts), [docs/K1-CANONICAL.md](docs/K1-CANONICAL.md)).
 
-## The K1 boss fight
+Low-S: if `s > n/2`, set `s' = n - s` and **`recid ^= 1`**.
 
-`fc::ecc::public_key::is_canonical` rejects a compact K1 signature unless both `r` and `s` pass this byte test. [EOSIO/eos#6699](https://github.com/EOSIO/eos/issues/6699) states it and argues it should be removed. The check is:
+Prefer **R1** for zero-retry online when legacy K1 is not required (`src/curve.ts`).
 
-```text
-!(b[0] & 0x80) && !(b[0] == 0 && !(b[1] & 0x80))
+### Codecs and digest
+
+- `PUB_K1_` / `SIG_K1_`: RIPEMD-160(payload ‖ ASCII type); `header = 31 + recid` ([src/codec.ts](src/codec.ts))
+- `sig_digest = SHA-256(chain_id ‖ packed_tx ‖ cfd_hash)` — not `tx_id` ([src/digest.ts](src/digest.ts))
+- WharfKit **4.0.2** recovers published Jungle K1/R1 vectors and sorts authorities
+
+### Policy
+
+Default labs: WAX Testnet + Jungle 4. Operators may add testnets only:
+
+```ts
+createPolicy({ extraLabChainIds: [CHAINS.telosTestnet] });
 ```
 
-applied to `r` and again to `s`.
-
-`r` is the x-coordinate of the nonce point. After the nonce is fixed you cannot edit `r` without a new nonce. `s` can be replaced by `n - s`, but that mirrors the nonce point, so the recovery id's low bit has to flip (`recid ^= 1`). The test `normalizeLowS` locks that flip. Forgetting it recovers the wrong public key.
-
-Consequences, under the uniform-byte model the tests count:
-
-| Preparation | Success fraction | Locked ratio |
-| --- | --- | --- |
-| Fresh random `r` and `s` | 24.798% | 65025/262144 |
-| `r` random, `s` only forced to a clear high bit | 49.604% | 65025/131072 |
-| `r` already filtered, then low-S `s` | 99.609% | 32640/32768 |
-| R1, if the only check is low-S and you normalize | the #6699 description says this is one correction, not a retry loop | not re-measured against nodeos here |
-
-The 99.609% case still fails sometimes, on a leading zero in `s`. Burn that presignature and start a new one. Signing again with a tweaked nonce, or reusing a nonce on a second digest, is the Hidden Number Problem. The museum test recovers a fixture scalar `x = 0x11` from two digests that shared `k = 0x22`. That fixture is not an account.
-
-R1 is attractive for a threshold lab because Antelope's R1 check, as #6699 describes it, is low-S only. K1 stays necessary anywhere a tool still assumes secp256k1, including a lot of explorers and any EVM derivation of the same share. Promoting R1 is a design note, not a claim that this repo produced an R1 signature.
+Mainnets are always refused. Blocked: `updateauth`, `setcode`, free-typed accounts, memo account smuggling.
 
 ---
 
-## Checksums and the signing digest
+## Masterclass — what a later implementation must still prove
 
-Modern keys are `PUB_K1_` or `PUB_R1_` plus Base58 of the 33-byte compressed point and a 4-byte RIPEMD-160 checksum. The checksum covers the point **and** the ASCII suffix `"K1"` or `"R1"`. Legacy `EOS` keys checksum the point alone. Vector 1 in [src/codec.ts](src/codec.ts) is a published point this file re-encodes. Both strings match.
+1. Reviewed MIT/Apache engine; no `backend-rug`, no AGPL/SLL in the tree  
+2. K1 presignatures filtered offline; failed online check burns the slot  
+3. Every co-signer packs and hashes; no `sign_digest` from the model  
+4. Model process never maps a share into itself  
+5. Cold `owner` can `updateauth` away a bad active key  
+6. Independent audit before mainnet value  
+7. Relay is not a party ([docs/RELAY.md](docs/RELAY.md))
 
-The signing digest is not the transaction id.
-
-```text
-tx_id      = SHA-256(packed_transaction)
-sig_digest = SHA-256(chain_id || packed_transaction || cfd_hash)
-```
-
-`cfd_hash` is 32 zero bytes when there is no context-free data. The Jungle 4 packed transaction in [src/digest.ts](src/digest.ts) hashes to the published tx id `6eac401c…a655ba` and, with the Jungle 4 chain id, to sig_digest `c0a70da4…ee8a3`. The same bytes under the WAX Testnet chain id do not. A co-signer that accepts a naked digest from a model has already lost the ability to read the actions. CVE-2025-66017's class of bug is the same shape: a presignature promised for one message getting used on another.
-
-WharfKit is the client to use. The tests import `@wharfkit/session` **4.0.2** (BSD-3-Clause), which re-exports `@wharfkit/antelope` at the same version. `Transaction.signingDigest(Chains.Jungle4.id)` equals the digest this course hashes by hand. `Signature.recoverDigest` returns `PUB_K1_6RrvujLQN1x5Tacbep1KAk8zzKpSThAQXBCKYFfGUYeACcSRFs` for the Jungle 4 K1 vector and `PUB_R1_7WVsSeomUhZL8FFHZWTLjBNJPxYuvEjjxuQRAq8hVaq768i8Wa` for the R1 vector. `Authority.sort()` puts the keys in the order nodeos expects before an `updateauth`.
-
-The blueprint said 4.0.1. On 26 November 2026 the current tag was 4.0.2, and that tag still matches the vectors, so the course pins 4.0.2 rather than freezing the older patch. A `SessionKit` is constructed for the two lab chains with an empty wallet-plugin list. It does not log in. eosjs and UAL are the legacy path; they are not a second recommended stack. The license reasons are in [docs/LICENSES.md](docs/LICENSES.md). An MIT course may depend on BSD-3-Clause WharfKit. It may describe an AGPL or non-commercial engine. It may not copy those engines into this tree.
-
----
-
-## Policy, models, and entropy
-
-A model can propose. It cannot be the thing that holds a share or the thing that decides.
-
-[src/policy.ts](src/policy.ts) is a local stand-in for that gate:
-
-- chain id must be WAX Testnet or Jungle 4
-- action must be `eosio.token::transfer`
-- `updateauth`, `deleteauth`, `linkauth`, `unlinkauth`, `setcode`, and `setabi` are refused
-- the recipient is an alias (`px-treasury`, `wax-faucet`, `test-peer`), not a free-typed account
-- the amount is at most 10.0000 WAX
-- the memo is printable ASCII, at most 64 characters, and may not carry an account name
-- the proposal expires inside 120 seconds
-- `kill()` refuses everything after that, and the refusal is an audit line
-
-There is no MCP server in this repo. The Model Context Protocol does not make a tool safe. A poisoned tool description is still untrusted text. The gate above does not call a network, so it also does not prove a dry-run against a real node.
-
-Entropy is the other boundary. Pixel Journey uses transaction ids as public, verifiable game seeds in other courses. Those values are a disaster as an MPC nonce or as a DKG coefficient. Nonces come from the operating system's CSPRNG. A public chain does not provide that.
-
-A hardware enclave that holds one share is still one share. It is not a quorum.
-
----
-
-## Masterclass — what a later implementation would still have to prove
-
-If someone builds the engines for real, the bar is higher than this course:
-
-1. Both crates compile without `backend-rug`, without AGPL, and without the non-commercial DKLs tree.
-2. K1 presignatures are filtered before they are stored, and a failed online canonical check destroys that presignature.
-3. Every signer packs the transaction, checks the chain id, and hashes the digest itself.
-4. The process that speaks to a model never maps a share into that process.
-5. `owner` can still rotate `active` with a native multisig if the co-signer disappears or the code is distrusted.
-6. Someone who did not write the code publishes an audit before the key is on a mainnet account.
-
-Until those exist, the honest statement is the one in the README: this is a course, the tests are the checks, and there is no signer.
-
-### Predict, then run
+Until then: this is a course. The tests are the checks. There is no production threshold signer.
 
 ```bash
 npm test
 ```
-
-You should see 23 passing tests. If a future edit changes the Jungle 4 vector, the WharfKit recovery, or the 32640 count, the edit is wrong or the rule being taught has changed. Do not "fix" the count to match a rounded percentage.
