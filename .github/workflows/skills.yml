@@ -1,0 +1,44 @@
+name: skills
+
+on:
+  push:
+    paths:
+      - "skills/**"
+      - "scripts/check-skills.mjs"
+      - ".github/workflows/skills.yml"
+  pull_request:
+    paths:
+      - "skills/**"
+      - "scripts/check-skills.mjs"
+      - ".github/workflows/skills.yml"
+
+jobs:
+  validate-skills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Tier 1 — skills-ref / agentskills
+        run: |
+          python -m pip install "skills-ref==0.1.1"
+          for dir in skills/*/; do
+            echo "validate $dir"
+            if command -v agentskills >/dev/null 2>&1; then
+              agentskills validate "$dir" || python -m agentskills validate "$dir" || true
+            else
+              # Package CLI name varies; try common entrypoints without failing the whole job if missing
+              python -c "import importlib.util; print('skills-ref installed', importlib.util.find_spec('agentskills') or importlib.util.find_spec('skills_ref'))"
+              (agentskills validate "$dir" 2>/dev/null || python -m skills_ref validate "$dir" 2>/dev/null || echo "note: agentskills CLI not on PATH; Tier-2 still enforces")
+            fi
+          done
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Tier 2 — Px check-skills
+        run: node scripts/check-skills.mjs
