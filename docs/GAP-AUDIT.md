@@ -1,15 +1,12 @@
-# Gap audit (2026-11-26)
+# Gap audit
 
 | Layer | Status |
 | --- | --- |
-| TS agent course (policy, MCP, simulate, museum, skills CI, push readiness) | **Done** |
-| Shared `testdata/vectors.json` (TS + Rust) | **Done** |
-| R.1 `antelope-crypto-format` + `deny.toml` | **Done** |
-| `ThresholdEngine` registry + mock | **Done** (`sign` throws) |
-| R.2 real DKLs23 / CGGMP24 WASM | **Not started** |
-| W live plugin + HTTP lab push | **Not started** |
-| Relay / Vault / PRF / UI | **Not started** |
+| **Educational course** (agent loop, crypto labs, museum, skills, push curriculum) | **Complete** — [COMPLETION.md](COMPLETION.md) |
+| R.1 Rust format + deny | **Done** |
+| Optional lab `get_info` client | **Done** (`labClient.ts`, opt-in) |
+| R.2 real threshold WASM | Not started |
+| W HTTP push + live WalletPlugin | Not started |
+| Relay / Vault / PRF / UI | Not started |
 
-Honesty line still accurate: **No threshold signing. No HTTP push by default. Unaudited.**
-
-Next: R.2 engines behind the existing trait **or** W lab `fetch` under `evaluatePushReadiness`.
+Banner still accurate for production claims: **No threshold signing. No HTTP push by default. Unaudited.**
