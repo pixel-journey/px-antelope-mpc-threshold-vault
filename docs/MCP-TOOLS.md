@@ -1,24 +1,36 @@
-# Four tools, and nothing that signs
+# Four tools (and a few catalog helpers), nothing that threshold-signs
 
 An agent connected over the Model Context Protocol can call tools. Those tools run code. A tool description is not a security boundary: hidden text in a description, a description that changes after approval, and one server shadowing another's tool name have all been shown in the wild. The prompt is not the gate.
 
 The safe split is the one this course already codes. The model proposes. A function that does not hold a key decides. Signing, if it ever happens, happens in a different process that has already read the same transaction the model claims to have proposed.
 
-## The four calls
+## Callable surface: `src/mcp.ts`
 
-None of these hold a share. None of them return a signature.
+```ts
+import {
+  listNetworks,
+  listStrategiesTool,
+  inspectPlaybook,
+  proposeTransfer,
+  runStrategyTool,
+  checkStatus,
+  MCP_TOOL_SPECS,
+} from "./mcp.js";
+```
 
-### 1. Inspect
+| Tool name | Function | Holds key? |
+| --- | --- | --- |
+| `list_networks` | `listNetworks()` | No |
+| `list_strategies` | `listStrategiesTool({ expect?, tag? })` | No |
+| `inspect_playbook` | `inspectPlaybook(chainId)` | No |
+| `propose_transfer` | `proposeTransfer(proposal)` | No |
+| `run_strategy` | `runStrategyTool(id, from, now)` | Lab key only after allow |
+| `check_status` | `checkStatus()` | No |
+| `lab_sign_allowed` | `labSignAllowed(...)` | Throwaway lab key — **not** for production MCP |
 
-Read-only. Ask a node for an account's permissions, `linkauth` rows, and CPU, NET, and RAM. This course does not open a socket. A later tool would call `get_account` and return the rows. It would not follow a URL or a memo from the model.
+`MCP_TOOL_SPECS` is the machine-readable advertisement list.
 
-### 2. Decode and simulate
-
-Read-only. Unpack an action against its ABI and ask the node what the balance changes would be. If the simulation shows a recipient the policy alias does not name, the proposal stops. This course does not simulate against a node. The policy gate is the local stand-in: unknown aliases are refused before any network call.
-
-### 3. Propose a transfer
-
-This is `createPolicy().propose` in [src/policy.ts](../src/policy.ts). The model supplies:
+## Propose rules (unchanged)
 
 | Field | Rule |
 | --- | --- |
@@ -30,17 +42,13 @@ This is `createPolicy().propose` in [src/policy.ts](../src/policy.ts). The model
 | `memo` | Printable ASCII, at most 64 characters, and not an account name hiding in the text. |
 | `nowSec` / `expiresAtSec` | Lifetime at most 120 seconds. |
 
-The return value is `{ ok, reason, account }`. `account` is the resolved name when `ok` is true. The model never chooses that name by typing it.
-
-Named moves, including the ones that should be refused, are `runStrategy` in [src/strategies.ts](../src/strategies.ts). See [STRATEGIES.md](STRATEGIES.md).
-
-### 4. Check status
-
-Ask whether the last decision was an allow, a refusal, or a kill. `policy.audit` is the log. `policy.kill("reason")` pauses further allows. A killed policy refuses everything until a new policy object is created. There is no hidden resume.
+Named moves: [STRATEGIES.md](STRATEGIES.md).
 
 ## Human in the loop
 
-A proposal the gate allows is still not a signature from a co-signer. The lab key in this process can sign an allow so a student can recover a `SIG_K1_`. A deployment that has a real co-signer should treat an allow under the cap as permission to start a ceremony, and anything over the cap, or any action outside the allow-list, as a prompt for a person holding `owner` or a passkey. This repository has no passkey prompt and no ceremony.
+A proposal the gate allows is still not a signature from a co-signer. The lab key in this process can sign an allow so a student can recover a `SIG_K1_`. A deployment that has a real co-signer should treat an allow under the cap as permission to start a ceremony, and anything over the cap, or any action outside the allow-list, as a prompt for a person holding `owner` or a passkey.
+
+The educational WalletPlugin shape in [src/walletPlugin.ts](../src/walletPlugin.ts) refuses threshold sign and refuses model-supplied digests.
 
 ## What must not be a tool
 
