@@ -1,60 +1,27 @@
-# Four tools (and a few catalog helpers), nothing that threshold-signs
+# MCP-shaped tools (no threshold sign, no broadcast)
 
-An agent connected over the Model Context Protocol can call tools. Those tools run code. A tool description is not a security boundary: hidden text in a description, a description that changes after approval, and one server shadowing another's tool name have all been shown in the wild. The prompt is not the gate.
+Callable surface: [src/mcp.ts](../src/mcp.ts).
 
-The safe split is the one this course already codes. The model proposes. A function that does not hold a key decides. Signing, if it ever happens, happens in a different process that has already read the same transaction the model claims to have proposed.
-
-## Callable surface: `src/mcp.ts`
-
-```ts
-import {
-  listNetworks,
-  listStrategiesTool,
-  inspectPlaybook,
-  proposeTransfer,
-  runStrategyTool,
-  checkStatus,
-  MCP_TOOL_SPECS,
-} from "./mcp.js";
-```
-
-| Tool name | Function | Holds key? |
+| Tool | Function | Lab SIG? |
 | --- | --- | --- |
 | `list_networks` | `listNetworks()` | No |
 | `list_strategies` | `listStrategiesTool({ expect?, tag? })` | No |
 | `inspect_playbook` | `inspectPlaybook(chainId)` | No |
 | `propose_transfer` | `proposeTransfer(proposal)` | No |
-| `run_strategy` | `runStrategyTool(id, from, now)` | Lab key only after allow |
+| `run_strategy` | `runStrategyTool(id, from, now, options?)` | Yes, after allow |
 | `check_status` | `checkStatus()` | No |
-| `lab_sign_allowed` | `labSignAllowed(...)` | Throwaway lab key — **not** for production MCP |
+| `lab_sign_allowed` | `labSignAllowed(...)` | Yes (lab only) |
+| `simulate_proposal` | `simulateProposal(proposal, decision)` | No |
+| `broadcast_status` | `broadcastStatus(chainId)` | No |
 
-`MCP_TOOL_SPECS` is the machine-readable advertisement list.
+Session policy: `resetSessionPolicy({ extraLabChainIds })` then `proposeTransfer` / `checkStatus`.
 
-## Propose rules (unchanged)
+`simulate_proposal` is **local** (policy + broadcast lock). It does not call nodeos. Production should use `/v1/chain/compute_transaction` on a lab endpoint after an allow.
 
-| Field | Rule |
-| --- | --- |
-| `chainId` | Must be a lab id unless an operator has widened the list. Mainnet ids are refused. |
-| `contract` / `action` | Only `eosio.token` / `transfer` today. |
-| `alias` | `px-treasury`, `wax-faucet`, or `test-peer`. A raw account name is refused. |
-| `amountUnits` | Integer smallest units, from 1 through 100000 (10.0000 of the chain token). |
-| `symbol` | `WAX` on WAX Testnet, `A` on Jungle 4. |
-| `memo` | Printable ASCII, at most 64 characters, and not an account name hiding in the text. |
-| `nowSec` / `expiresAtSec` | Lifetime at most 120 seconds. |
+`broadcast_status` reports candidate testnets; `courseBroadcasts` is always `false`.
 
-Named moves: [STRATEGIES.md](STRATEGIES.md).
+## Still forbidden as tools
 
-## Human in the loop
+`sign_digest`, free-text recipients, `updateauth` / `setcode`, mainnet send.
 
-A proposal the gate allows is still not a signature from a co-signer. The lab key in this process can sign an allow so a student can recover a `SIG_K1_`. A deployment that has a real co-signer should treat an allow under the cap as permission to start a ceremony, and anything over the cap, or any action outside the allow-list, as a prompt for a person holding `owner` or a passkey.
-
-The educational WalletPlugin shape in [src/walletPlugin.ts](../src/walletPlugin.ts) refuses threshold sign and refuses model-supplied digests.
-
-## What must not be a tool
-
-- `sign_digest`, `sign_hex`, or any function that accepts a hash the model computed.
-- `updateauth` and the other blocked actions.
-- A free-text recipient field.
-- A tool whose description says it will ignore the policy if the user insists.
-
-[skills/antelope-agent-propose/SKILL.md](../skills/antelope-agent-propose/SKILL.md) is the short form of this page for an agent that loads skills.
+Skill: [skills/antelope-agent-propose](../skills/antelope-agent-propose/SKILL.md) · [skills/antelope-agentic-payments](../skills/antelope-agentic-payments/SKILL.md).
