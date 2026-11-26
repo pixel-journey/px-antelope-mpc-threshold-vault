@@ -1,4 +1,4 @@
-import { CHAINS, LAB_CHAIN_IDS } from "./digest.js";
+import { CHAINS } from "./digest.js";
 import { handoff, type Handoff } from "./dryrun.js";
 import { createLabKey, signAllowed, type LabSignature } from "./labsign.js";
 import {
@@ -11,10 +11,8 @@ import {
 /**
  * Named moves an agent can attempt.
  * Each one becomes a proposal. The policy gate still decides.
- * An allow on a lab chain can be signed with a throwaway lab key.
- *
- * `expect` is the *default* gate outcome (no extraLabChainIds).
- * Operator-opted testnets use runStrategyWithPolicy({ extraLabChainIds }).
+ * An allow can be signed with a throwaway lab key when the chain is in the
+ * policy's effective lab set (default LAB_CHAIN_IDS or operator extras).
  */
 
 export interface Strategy {
@@ -321,7 +319,6 @@ export function strategiesByTag(tag: string): Strategy[] {
   return STRATEGIES.filter((entry) => entry.tags?.some((t) => t === needle));
 }
 
-/** Strategies whose chain is only reachable via operator extraLabChainIds. */
 export function operatorOptInStrategies(): Strategy[] {
   return STRATEGIES.filter((s) => s.tags?.includes("operator-opt-in"));
 }
@@ -356,31 +353,20 @@ function runWithOptions(
   const strategy = strategyById(id);
   if (!strategy) throw new Error(`unknown strategy ${id}`);
   const proposal = proposalFrom(strategy, nowSec);
-  const decision = createPolicy(options).propose(proposal);
+  const policy = createPolicy(options);
+  const decision = policy.propose(proposal);
   if (!decision.ok) return { strategy, decision, handoff: null, lab: null };
-
-  // Lab signer only knows the built-in LAB_CHAIN_IDS today.
-  const canLabSign = LAB_CHAIN_IDS.includes(
-    proposal.chainId as (typeof LAB_CHAIN_IDS)[number],
-  );
   const bound = handoff(proposal, decision, fromAccount);
-  if (!canLabSign) {
-    return { strategy, decision, handoff: bound, lab: null };
-  }
-  const lab = signAllowed(createLabKey(), proposal, decision, fromAccount);
+  const lab = signAllowed(createLabKey(), proposal, decision, fromAccount, {
+    allowedChainIds: policy.labChainIds,
+  });
   return { strategy, decision, handoff: bound, lab };
 }
 
-/** Default gate (WAX Testnet + Jungle 4 only). */
 export function runStrategy(id: string, fromAccount: string, nowSec: number): StrategyResult {
   return runWithOptions(id, fromAccount, nowSec, {});
 }
 
-/**
- * Same catalog, with operator PolicyOptions (e.g. extraLabChainIds).
- * Lab SIG_K1_ is only produced for the built-in LAB_CHAIN_IDS;
- * opted-in testnets get an allow + handoff without a lab signature.
- */
 export function runStrategyWithPolicy(
   id: string,
   fromAccount: string,
