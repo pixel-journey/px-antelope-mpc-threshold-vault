@@ -20,6 +20,7 @@ This repository is the reading course and the byte-level lab for that idea. It i
 | [docs/NETWORKS.md](docs/NETWORKS.md) | Chain ids, token symbols, and endpoints for WAX, Vaulta, Telos, XPR Network, and UX |
 | [docs/AGENTIC-PAYMENTS.md](docs/AGENTIC-PAYMENTS.md) | How an agent proposes a transfer, how the policy gate checks it, and why the account name matters |
 | [docs/WITHOUT-WHARFKIT.md](docs/WITHOUT-WHARFKIT.md) | What you still have to get right if the agent cannot use the WharfKit packages |
+| [docs/AGENT-STRATEGIES.md](docs/AGENT-STRATEGIES.md) | Three share roles, four tools an agent may call, and per-chain opportunities |
 | [docs/SOURCES.md](docs/SOURCES.md) | Primary sources, and what was rechecked here |
 
 ```bash
