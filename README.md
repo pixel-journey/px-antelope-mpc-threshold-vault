@@ -13,6 +13,7 @@ This repository is the reading course and the byte-level lab for that idea. It i
 | Doc | What it is |
 | --- | --- |
 | [EDUCATION.md](EDUCATION.md) | The course: permissions, the four protocol generations, the K1 trap, the policy gate |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Hybrid thesis: MPC on active, cold owner multisig, what this tree runs vs later |
 | [docs/CURRICULUM.md](docs/CURRICULUM.md) | Eight levels, and which of them this repo actually runs |
 | [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) | What the tests refuse, and what they cannot prove |
 | [docs/LICENSES.md](docs/LICENSES.md) | Why this course stays MIT, and why WharfKit (BSD-3-Clause) is the client we depend on |
@@ -25,7 +26,7 @@ This repository is the reading course and the byte-level lab for that idea. It i
 | [docs/AGENT-STRATEGIES.md](docs/AGENT-STRATEGIES.md) | Three share roles, four tools an agent may call, and per-chain opportunities |
 | [docs/PROTOCOL-GENERATIONS.md](docs/PROTOCOL-GENERATIONS.md) | GG18/GG20, CGGMP24, DKLs23, and the 2025–2026 class-group protocols |
 | [docs/K1-CANONICAL.md](docs/K1-CANONICAL.md) | The byte check, low-S, the recovery-id flip, and r-filtering |
-| [docs/ATTACK-MUSEUM.md](docs/ATTACK-MUSEUM.md) | Nonce reuse, concatenation collisions, and the Paillier proof gaps |
+| [docs/ATTACK-MUSEUM.md](docs/ATTACK-MUSEUM.md) | K1 canonical boss fight, nonce reuse, concat collisions, Paillier gaps |
 | [docs/POST-QUANTUM.md](docs/POST-QUANTUM.md) | What Antelope can verify today, and what would need a new key type |
 | [docs/CHAIN-OPPORTUNITIES.md](docs/CHAIN-OPPORTUNITIES.md) | Per-chain actions an agent can propose once the gate allows the chain id |
 | [docs/HANDOFF.md](docs/HANDOFF.md) | The record an agent hands a co-signer, and why that record is not a signing digest |
