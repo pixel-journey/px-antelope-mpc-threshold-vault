@@ -2,7 +2,7 @@
 
 > **Status:** educational reference for agentic payments on Antelope. Unaudited. The policy gate defaults to testnets; the network map includes the mainnets.  
 > **What `npm test` does:** locks the K1 canonical byte rule, one published public-key checksum, one Jungle 4 signing digest, WharfKit 4.0.2 recovering the same keys, a policy gate, and two museum calculations.  
-> **What it does not do:** threshold signing, WebAssembly, a custom wallet plugin, a relay, a key share, or a broadcast.
+> **What it does not do:** real threshold signing, WebAssembly, a custom wallet plugin, a relay, a key share, or a broadcast. `src/threshold.ts` is an educational mock that walks DKG and presign and then refuses to sign.
 
 Antelope already has a way to rotate a key without moving the assets: the account is a name, and `eosio::updateauth` changes who may act for it. An Ethereum address cannot do that, because the address is the key. Threshold ECDSA still matters here, because a single `SIG_K1_` or `SIG_R1_` hides the signer set and does not need an `eosio.msig` proposal for every game action. It does not replace the cold owner multisig. The cold owner is how you throw away a bad active key.
 
