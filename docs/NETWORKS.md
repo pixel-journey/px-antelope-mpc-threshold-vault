@@ -6,7 +6,7 @@ This course's policy gate still defaults to the two lab testnets. Operators may 
 
 ## Chain ids
 
-These ids come from `@wharfkit/session` 4.0.2 `Chains`.
+These ids come from `@wharfkit/session` 4.0.2 `Chains` (locked in tests).
 
 | Network | Chain id | System token | Typical public endpoint |
 | --- | --- | --- | --- |
@@ -31,7 +31,7 @@ import { CHAINS } from "./digest.js";
 // Default: WAX Testnet + Jungle 4 only
 createPolicy();
 
-// Operator opens Telos Testnet (still not mainnet)
+// Operator opens Telos + XPR testnets (still not mainnet)
 createPolicy({ extraLabChainIds: [CHAINS.telosTestnet, CHAINS.xprTestnet] });
 ```
 
@@ -43,15 +43,30 @@ createPolicy({ extraLabChainIds: [CHAINS.telosTestnet, CHAINS.xprTestnet] });
 
 Symbol map for opted-in testnets is in `src/policy.ts` (`SYMBOL_BY_CHAIN`).
 
+## Lab HTTP catalog
+
+[src/rpc.ts](../src/rpc.ts) lists Greymass-style endpoints for the lab and opt-in testnets. Live calls go through [src/labClient.ts](../src/labClient.ts):
+
+| Call | Requirement |
+| --- | --- |
+| `fetchLabChainInfo` | `enableNetwork: true`; testnet only |
+| `pushLabTransaction` | `enableNetwork: true` + full readiness checklist |
+
+Default agent paths open **no** sockets. See [RPC.md](RPC.md) · [PUSH.md](PUSH.md).
+
 ## What an agent needs per network
 
 1. The chain id (so the signing digest is bound to that chain).
-2. A working RPC endpoint that answers `/v1/chain/get_info` and `/v1/chain/push_transaction` (this course does not call them).
+2. A working RPC endpoint that answers `/v1/chain/get_info` and (when deliberately sending) `/v1/chain/push_transaction`.
 3. The system token symbol and its precision. The lab gate counts amounts as 4-decimal units (`10000n` = `1.0000`). WAX mainnet assets use 8 decimals; a co-signer packing a real WAX transfer must use that precision.
-4. A permission that is allowed to call `eosio.token::transfer`.
+4. A permission that is allowed to call `eosio.token::transfer` (prefer `linkauth`-scoped agent permission).
 
 The gate still refuses `updateauth`, `setcode`, and free-typed recipient names.
 
 ## Testnets first, then mainnets
 
 Start on WAX Testnet or Jungle 4. Opt into other testnets deliberately. Mainnets are never a default or a soft option in this course.
+
+## Cross-chain notes
+
+AtomicAssets, oracles (`orng.wax` is WAX-specific), and resource models differ by network. Shared Antelope patterns (names, `updateauth`, ECDSA K1/R1) travel; feature-specific contracts do not. See [CHAIN-OPPORTUNITIES.md](CHAIN-OPPORTUNITIES.md).
