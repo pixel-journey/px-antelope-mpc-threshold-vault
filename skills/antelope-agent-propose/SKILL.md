@@ -1,6 +1,6 @@
 ---
 name: antelope-agent-propose
-description: Use when an agent needs to propose an Antelope transfer that a policy gate will check. Covers named strategies, chain ids, recipient aliases, spend caps, and the actions that must be refused. A lab key signs only after an allow. It does not broadcast.
+description: Use when an agent needs to propose an Antelope transfer that a policy gate will check. Covers named strategies, chain ids, recipient aliases, spend caps, playbooks, and the actions that must be refused. A lab key signs only after an allow. It does not broadcast.
 license: MIT
 ---
 
@@ -8,7 +8,18 @@ license: MIT
 
 Work in this repository, not from memory.
 
-- Call `runStrategy(id, fromAccount, nowSec)` in `src/strategies.ts` when the move is one of the named strategies. It proposes, and it signs with a lab key only after an allow.
+## Catalog (callable today)
+
+- `listStrategyIds()`, `strategiesByExpect("allow"|"refuse")`, `strategiesByTag(tag)` in `src/strategies.ts`.
+- `runStrategy(id, fromAccount, nowSec)` proposes and lab-signs only after an allow.
+- Four allows today: `wax-testnet-tip`, `treasury-tip`, `jungle-tip`, `peer-tip`.
+- Per-network opportunity map: `PLAYBOOKS`, `playbookByChainId`, `defaultGateActions()` in `src/playbooks.ts`.
+- Hybrid custody shapes (inspect only, `executed: false`): `hybridCustodyPlan` in `src/permissions.ts`.
+- Presign queue policy (synthetic bytes, not a ceremony): `PresignQueue` in `src/presign.ts`.
+- Prefer R1 for online signing when legacy K1 is not required: `recommendCurve()` in `src/curve.ts`.
+
+## Gate rules
+
 - Call the policy gate in `src/policy.ts` for a proposal that is not in the catalog. Do not invent a second gate.
 - Allowed chain ids are the ones in `LAB_CHAIN_IDS` unless the operator has widened the list. Mainnet ids are refused by default.
 - Recipient must be an alias the gate already knows (`px-treasury`, `wax-faucet`, `test-peer`). Free-typed account names are refused.
