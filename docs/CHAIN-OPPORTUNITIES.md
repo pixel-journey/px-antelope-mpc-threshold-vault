@@ -1,88 +1,70 @@
 # What an agent can do on each Antelope network
 
-The proposal shape is the same on every chain: a chain id, a contract, an action, a recipient alias, an amount, a short memo, and an expiration. The policy gate resolves the alias and refuses anything outside its allow-list. What changes per network is the system token, the contracts worth calling, and whether the gate currently allows the chain id.
+The proposal shape is the same on every chain: chain id, contract, action, recipient alias, amount, short memo, expiration. The policy gate resolves the alias and refuses anything outside its allow-list.
 
-**Callable today without changing the gate:** four lab strategies — `wax-testnet-tip`, `treasury-tip`, `jungle-tip`, `peer-tip`. See [STRATEGIES.md](STRATEGIES.md).
+**Callable on the default gate:** `wax-testnet-tip`, `treasury-tip`, `jungle-tip`, `peer-tip` → allow + recoverable lab `SIG_K1_`.
 
-The tables below are what becomes possible once an operator adds a chain id and an alias. The playbook catalog is also machine-readable in [src/playbooks.ts](../src/playbooks.ts).
+**Callable with operator opt-in:** `telos-testnet-tip`, `xpr-testnet-tip` via `runStrategyWithPolicy(..., { extraLabChainIds })` → allow + lab `SIG_K1_` (still not a node broadcast).
+
+Machine-readable playbooks: [src/playbooks.ts](../src/playbooks.ts). Strategies: [STRATEGIES.md](STRATEGIES.md).
 
 ## WAX
 
-| Action | Contract | Why an agent would call it | Default gate |
-| --- | --- | --- | --- |
-| Transfer WAX | `eosio.token` | Tip, fund a faucet, move WAX between known aliases | Lab: allow · Mainnet: refuse |
-| AtomicAssets transfer | `atomicassets` | Move an NFT the agent is allowed to handle | Refuse until allow-listed |
-| mintasset / burnasset | `atomicassets` | Create or retire supply | Refuse (human / mint policy) |
-| Stake / unstake | `eosio` | Adjust CPU/NET | Refuse |
-| DEX swap shape | e.g. `alcor.dex` | Educational swap row in the playbook | Refuse |
-
-WAX Testnet is the place to practice. WAX Mainnet is where those actions matter. Strategy ids: `wax-testnet-tip`, `treasury-tip`, `wax-mainnet-tip`, `nft-*`.
+| Action | Contract | Default gate |
+| --- | --- | --- |
+| Transfer WAX | `eosio.token` | Lab: allow · Mainnet: refuse |
+| AtomicAssets transfer / mint / burn | `atomicassets` | Refuse until dedicated allow-list |
+| Stake / unstake | `eosio` | Refuse |
+| DEX swap shape | e.g. Alcor | Refuse (playbook row only) |
 
 ## Vaulta (EOS) / Jungle 4
 
-| Action | Contract | Why an agent would call it | Default gate |
-| --- | --- | --- | --- |
-| Transfer A | `eosio.token` | Move the system token | Jungle: allow · Vaulta: refuse |
-| buyram / delegatebw | `eosio` | RAM and stake | Refuse |
-| setcode | `eosio` | Deploy | Blocked by name |
-| eosio.msig::propose | `eosio.msig` | Native multisig — complements MPC | Refuse (different lab) |
+| Action | Contract | Default gate |
+| --- | --- | --- |
+| Transfer A | `eosio.token` | Jungle: allow · Vaulta mainnet: refuse |
+| buyram / delegatebw | `eosio` | Refuse |
+| setcode | `eosio` | Blocked by name |
+| eosio.msig::propose | `eosio.msig` | Refuse (separate msig lab) |
 
-Vaulta and EOS share chain id `aca376…`. Jungle 4 is the testnet and the source of the published digest vector. Strategy ids: `jungle-tip`, `peer-tip`, `vaulta-tip`, `buy-ram`, `setcode`.
+Jungle 4 is the source of the published digest vector.
 
 ## Telos
 
-| Action | Contract | Why an agent would call it | Default gate |
-| --- | --- | --- | --- |
-| Transfer TLOS | `eosio.token` | Move the system token | Refuse until chain id added |
-| Telos-native contracts | varies | Only after allow-list entries | Refuse |
-
-Telos completed its Savanna transition in July 2026. The experimental Quantum Testnet is a separate network for post-quantum migration tests — not a place this course's gate allows. Strategy ids: `telos-tip`, `telos-testnet-tip`.
+| Action | Default gate |
+| --- | --- |
+| Transfer TLOS on **testnet** | Refuse by default; **allow + lab sig** with `extraLabChainIds: [telosTestnet]` |
+| Transfer TLOS on **mainnet** | Always refuse |
+| Quantum Testnet (PQ experiments) | Not in this gate |
 
 ## XPR Network (Proton)
 
-| Action | Contract | Why an agent would call it | Default gate |
-| --- | --- | --- | --- |
-| Transfer XPR | `eosio.token` | Move the system token; often pairs with payment rails | Refuse until chain id added |
-| Proton-native contracts | varies | Only after allow-list entries | Refuse |
-
-XPR Network and Proton share the same chain id. Strategy ids: `xpr-tip`, `xpr-testnet-tip`.
+| Action | Default gate |
+| --- | --- |
+| Transfer XPR on **testnet** | Refuse by default; **allow + lab sig** with `extraLabChainIds: [xprTestnet]` |
+| Transfer XPR on **mainnet** | Always refuse |
 
 ## UX Network
 
-| Action | Contract | Why an agent would call it | Default gate |
-| --- | --- | --- | --- |
-| Transfer UX | `eosio.token` | Move the system token once the gate allows the chain id | Refuse |
-
-Strategy id: `ux-tip`.
+Transfer UX mainnet: refuse. No testnet row in the default catalog yet.
 
 ## Cross-chain and multi-footprint
-
-An agent that holds a secp256k1 share can, in principle, produce a signature for any chain that accepts secp256k1. The digest rules differ:
 
 | Family | Digest idea | This course |
 | --- | --- | --- |
 | Antelope | `SHA-256(chain_id ‖ packed_tx ‖ cfd_hash)` | Locked |
-| Ethereum | RLP + chain id placement | Not produced |
-| Bitcoin Taproot | Schnorr via FROST, not ECDSA | Named only in the blueprint |
+| Ethereum | RLP + chain id | Not produced |
+| Bitcoin Taproot | Schnorr / FROST | Named only |
 
-**Replay protection:** the chain id inside the Antelope signing digest prevents a WAX transfer from being replayed on Telos. Do not strip it. Lab strategies already use different proposal ids across chains.
+**Replay protection:** chain id inside the Antelope digests prevents cross-chain replay of a real packed tx. Lab strategies use different proposal ids per strategy/chain.
 
-**Hybrid custody (blueprint thesis):** put the MPC (or lab) key on `active` for day-to-day agent tips; keep a weighted cold multisig on `owner` so one `updateauth` can revoke a compromised active key without moving tokens or NFTs. See [ARCHITECTURE.md](../ARCHITECTURE.md).
+**Hybrid custody:** MPC (or lab) key on `active`; cold 2-of-3 on `owner`. See [ARCHITECTURE.md](../ARCHITECTURE.md).
 
-**What stays human even after a chain is opened:**
-
-- `updateauth` / `linkauth` / `setcode` / `deleteauth`
-- Over-cap transfers
-- NFT mint/burn unless a dedicated policy exists
-- RAM / stake / REX
-- Any free-typed account name (aliases only)
+**Always human:** `updateauth` / `linkauth` / `setcode` / over-cap / mint-burn without policy / free-typed accounts.
 
 ## What the agent must still not do
 
-- Trust a digest that someone else hashed
-- Use a transaction id, a block id, or `orng.wax` as a nonce
+- Trust a digest someone else hashed
+- Use a tx id / block id / `orng.wax` as a nonce
 - Hold the only share
-- Call `updateauth`, `setcode`, or `deleteauth` from the agent permission
+- Call permission or code-changing actions from the agent path
 - Skip the gate because the model sounds sure
-
-See [AGENT-STRATEGIES.md](AGENT-STRATEGIES.md) for share roles and [NETWORKS.md](NETWORKS.md) for chain ids.
