@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CHAINS } from "./digest.js";
+import { recoverLab } from "./labsign.js";
 import {
   operatorOptInStrategies,
   runStrategy,
@@ -20,14 +21,14 @@ describe("operator opt-in strategies", () => {
     expect(result.lab).toBeNull();
   });
 
-  it("allows telos-testnet-tip when opted in, without lab signature", () => {
+  it("allows telos-testnet-tip when opted in and lab-signs", () => {
     const result = runStrategyWithPolicy("telos-testnet-tip", "agent.pxj", now, {
       extraLabChainIds: [CHAINS.telosTestnet],
     });
     expect(result.decision.ok).toBe(true);
     expect(result.handoff?.chainId).toBe(CHAINS.telosTestnet);
-    // Lab signer is limited to built-in LAB_CHAIN_IDS
-    expect(result.lab).toBeNull();
+    expect(result.lab?.signature.startsWith("SIG_K1_")).toBe(true);
+    expect(recoverLab(result.lab!)).toBe(result.lab!.publicKey);
   });
 
   it("still refuses mainnet even with extras", () => {
