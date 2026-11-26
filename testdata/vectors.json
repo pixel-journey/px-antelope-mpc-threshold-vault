@@ -1,0 +1,16 @@
+{
+  "jungle4": {
+    "chainId": "73e4385a2708e6d7048834fbc1079f2fabb17b3c125b146af438971e90716c4d",
+    "packedTx": "e00300007b00c8010000000000000100a6823403ea3055000000572d3ccdcd01000000000000285d00000000a8ed3232280000000000855c340000000000000e3da40100000000000001474d5a0000000007666f7220796f7500",
+    "txId": "6eac401c92c7e6b52af282c0811b0094ede33d81b982221ca85f9ff835a655ba",
+    "sigDigest": "c0a70da4105f0f3a282d262be419724062fc829baaff1516baa173f1f6eee8a3"
+  },
+  "canonicalCounts": {
+    "oneComponentPass": 32640,
+    "oneComponentTotal": 65536,
+    "bothPass": 65025,
+    "bothTotal": 262144,
+    "bothFail": 197119
+  },
+  "note": "Shared by TypeScript course tests and crates/antelope-crypto-format. No threshold signing."
+}
