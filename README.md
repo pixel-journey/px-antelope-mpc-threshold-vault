@@ -12,22 +12,32 @@ This repository is the reading course and the byte-level lab for that idea. It i
 
 | Doc | What it is |
 | --- | --- |
+| [docs/DECIDE.md](docs/DECIDE.md) | The order an agent checks a proposal, and where it must stop |
+| [docs/TODAY.md](docs/TODAY.md) | What a developer or an agent can call in this repository right now |
 | [EDUCATION.md](EDUCATION.md) | The course: permissions, the four protocol generations, the K1 trap, the policy gate |
+| [docs/PERMISSIONS.md](docs/PERMISSIONS.md) | owner, active, and a linked agent permission |
+| [docs/MCP-TOOLS.md](docs/MCP-TOOLS.md) | The four calls an agent may make, and the fields the policy gate accepts |
+| [docs/CHAIN-OPPORTUNITIES.md](docs/CHAIN-OPPORTUNITIES.md) | Per-chain actions an agent can propose once the gate allows the chain id |
+| [docs/PROTOCOL-GENERATIONS.md](docs/PROTOCOL-GENERATIONS.md) | GG18/GG20, CGGMP24, DKLs23, and the 2025-2026 class-group protocols |
+| [docs/K1-CANONICAL.md](docs/K1-CANONICAL.md) | The byte check, low-S, the recovery-id flip, and r-filtering |
+| [docs/PRESIGNATURES.md](docs/PRESIGNATURES.md) | One-time nonces, r-filtering, refresh, and why the relay is not a party |
+| [docs/ATTACK-MUSEUM.md](docs/ATTACK-MUSEUM.md) | Nonce reuse, concatenation collisions, and the Paillier proof gaps |
+| [docs/ENTROPY.md](docs/ENTROPY.md) | Why game randomness is not a signing nonce |
+| [docs/POST-QUANTUM.md](docs/POST-QUANTUM.md) | What Antelope can verify today, and what would need a new key type |
+| [docs/NETWORKS.md](docs/NETWORKS.md) | Chain ids, token symbols, and endpoints for WAX, Vaulta, Telos, XPR Network, and UX |
+| [docs/AGENTIC-PAYMENTS.md](docs/AGENTIC-PAYMENTS.md) | How an agent proposes a transfer, how the policy gate checks it, and why the account name matters |
+| [docs/AGENT-STRATEGIES.md](docs/AGENT-STRATEGIES.md) | Three share roles, four tools an agent may call, and per-chain opportunities |
+| [docs/WITHOUT-WHARFKIT.md](docs/WITHOUT-WHARFKIT.md) | What you still have to get right if the agent cannot use the WharfKit packages |
 | [docs/CURRICULUM.md](docs/CURRICULUM.md) | Eight levels, and which of them this repo actually runs |
 | [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) | What the tests refuse, and what they cannot prove |
 | [docs/LICENSES.md](docs/LICENSES.md) | Why this course stays MIT, and why WharfKit (BSD-3-Clause) is the client we depend on |
-
-| [docs/NETWORKS.md](docs/NETWORKS.md) | Chain ids, token symbols, and endpoints for WAX, Vaulta, Telos, XPR Network, and UX |
-| [docs/AGENTIC-PAYMENTS.md](docs/AGENTIC-PAYMENTS.md) | How an agent proposes a transfer, how the policy gate checks it, and why the account name matters |
-| [docs/WITHOUT-WHARFKIT.md](docs/WITHOUT-WHARFKIT.md) | What you still have to get right if the agent cannot use the WharfKit packages |
-| [docs/AGENT-STRATEGIES.md](docs/AGENT-STRATEGIES.md) | Three share roles, four tools an agent may call, and per-chain opportunities |
 | [docs/SOURCES.md](docs/SOURCES.md) | Primary sources, and what was rechecked here |
 
 ```bash
 npm test
 ```
 
-Fifteen tests. Node 22 was used when they were last run. `@wharfkit/antelope` and `@wharfkit/session` are pinned at **4.0.2** (BSD-3-Clause). `@noble/curves` is used only inside the nonce-reuse fixture.
+Twenty-three tests. Node 22 was used when they were last run. `@wharfkit/antelope` and `@wharfkit/session` are pinned at **4.0.2** (BSD-3-Clause). `@noble/curves` is used only inside the nonce-reuse fixture.
 
 ## The number the tests lock
 
