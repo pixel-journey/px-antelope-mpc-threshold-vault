@@ -4,7 +4,7 @@
 > Default gate: **WAX Testnet** + **Jungle 4**. Operators may open more *testnets* via `extraLabChainIds`. **Mainnets hard-refused.**  
 > **No threshold WASM signing** (engine mock only; `sign()` throws).  
 > **No HTTP by default** — lab `get_info` / `push_transaction` require explicit `enableNetwork` + readiness gates ([docs/PUSH.md](docs/PUSH.md)).  
-> **Done vs remains:** [docs/GAP-AUDIT.md](docs/GAP-AUDIT.md) · **Educational checklist:** [docs/COMPLETION.md](docs/COMPLETION.md)
+> **Map:** [docs/INDEX.md](docs/INDEX.md) · **Done vs remains:** [docs/GAP-AUDIT.md](docs/GAP-AUDIT.md) · **Checklist:** [docs/COMPLETION.md](docs/COMPLETION.md)
 
 Antelope already has a way to rotate a key without moving assets: the account is a **name**, and `eosio::updateauth` changes who may act for it. Threshold ECDSA still matters because a single `SIG_K1_` / `SIG_R1_` hides the signer set. It does **not** replace cold owner multisig.
 
@@ -86,22 +86,20 @@ Push is **not** an MCP tool (models should not fire broadcast). See [docs/PUSH.m
 
 ## Read in this order
 
+Full map: [docs/INDEX.md](docs/INDEX.md).
+
 | Doc | What it is |
 | --- | --- |
-| [EDUCATION.md](EDUCATION.md) | Course spine: hybrid permissions, generations, K1 trap, policy |
+| [docs/DECIDE.md](docs/DECIDE.md) | Stop conditions before a proposal |
+| [EDUCATION.md](EDUCATION.md) | Course spine |
 | [docs/TODAY.md](docs/TODAY.md) | Callable surface right now |
 | [docs/AGENT-RECIPE.md](docs/AGENT-RECIPE.md) | Full agent loop |
-| [docs/GAP-AUDIT.md](docs/GAP-AUDIT.md) | Done vs remains (vs description-only reviews) |
+| [docs/GAP-AUDIT.md](docs/GAP-AUDIT.md) | Done vs remains |
 | [docs/COMPLETION.md](docs/COMPLETION.md) | Educational vs production definition of done |
-| [docs/AGENTIC-PAYMENTS.md](docs/AGENTIC-PAYMENTS.md) | What MPC does / does not solve; Antelope L1 advantages |
-| [docs/PUSH.md](docs/PUSH.md) | `push_transaction` as final stage + gated sender |
-| [docs/MCP-TOOLS.md](docs/MCP-TOOLS.md) | Tool list; what is intentionally not a tool |
+| [docs/PUSH.md](docs/PUSH.md) | Gated lab sender |
 | [docs/ENGINE.md](docs/ENGINE.md) | Threshold engine registry |
-| [docs/RUST.md](docs/RUST.md) | Phase R.1 format crate + `deny.toml` |
-| [docs/ATTACK-MUSEUM.md](docs/ATTACK-MUSEUM.md) | CVE cards + toy demos |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Hybrid thesis |
 | [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) | In / out of scope |
-| [docs/RELAY.md](docs/RELAY.md) | Co-signer relay design (not implemented) |
 
 ## Engines
 
