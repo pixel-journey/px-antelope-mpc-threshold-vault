@@ -2,11 +2,11 @@
 
 An agent that can pay on one Antelope chain can pay on the others. The account name, the permission tree, and the 65-byte signature are the same shape. Only the chain id, the system token symbol, and the public endpoints change.
 
-This course's policy gate still defaults to the two lab testnets. The map below is what you use when you decide the agent is ready for a wider set.
+This course's policy gate still defaults to the two lab testnets. Operators may opt into **additional testnets** via `createPolicy({ extraLabChainIds: [...] })`. Mainnet chain ids are always refused, even if listed by mistake.
 
 ## Chain ids
 
-These ids come from `@wharfkit/session` 4.0.2 `Chains`. They were re-read while this file was written.
+These ids come from `@wharfkit/session` 4.0.2 `Chains`.
 
 | Network | Chain id | System token | Typical public endpoint |
 | --- | --- | --- | --- |
@@ -20,17 +20,38 @@ These ids come from `@wharfkit/session` 4.0.2 `Chains`. They were re-read while 
 | XPR Network Testnet | `71ee83bcf52142d61019d95f9cc5427ba6a0d7ff8accd9e2088ae2abeaf3d3dd` | XPR | `https://proton-testnet.greymass.com` |
 | UX Network | `8fc6dce7942189f842170de953932b1f66693ad3788f766e777b6f9d22335c02` | UX | (check current public nodes) |
 
-Vaulta and EOS share the same chain id. XPR Network and Proton share the same chain id. An agent that hard-codes "EOS" or "Proton" will still hit the right network if it uses the id above.
+Vaulta and EOS share the same chain id. XPR Network and Proton share the same chain id.
+
+## Default lab set vs operator opt-in
+
+```ts
+import { createPolicy } from "./policy.js";
+import { CHAINS } from "./digest.js";
+
+// Default: WAX Testnet + Jungle 4 only
+createPolicy();
+
+// Operator opens Telos Testnet (still not mainnet)
+createPolicy({ extraLabChainIds: [CHAINS.telosTestnet, CHAINS.xprTestnet] });
+```
+
+| Chain | Default gate | With `extraLabChainIds` |
+| --- | --- | --- |
+| WAX Testnet / Jungle 4 | Allow (with matching symbol) | Allow |
+| Telos Testnet / XPR Testnet | Refuse | Allow if listed + symbol `TLOS` / `XPR` |
+| Any mainnet | Refuse | **Still refuse** (stripped from extra list) |
+
+Symbol map for opted-in testnets is in `src/policy.ts` (`SYMBOL_BY_CHAIN`).
 
 ## What an agent needs per network
 
 1. The chain id (so the signing digest is bound to that chain).
-2. A working RPC endpoint that answers `/v1/chain/get_info` and `/v1/chain/push_transaction`.
-3. The system token symbol and its precision. This gate counts a lab amount as 4-decimal units, so `10000n` is `1.0000`. That matches A, TLOS, and XPR. WAX's `eosio.token` asset uses 8 decimal places (`1.00000000 WAX`). A co-signer packing a real WAX transfer must use that precision. The lab cap is not a claim about mainnet asset encoding.
-4. A permission that is allowed to call `eosio.token::transfer` (or whatever action the agent is supposed to take).
+2. A working RPC endpoint that answers `/v1/chain/get_info` and `/v1/chain/push_transaction` (this course does not call them).
+3. The system token symbol and its precision. The lab gate counts amounts as 4-decimal units (`10000n` = `1.0000`). WAX mainnet assets use 8 decimals; a co-signer packing a real WAX transfer must use that precision.
+4. A permission that is allowed to call `eosio.token::transfer`.
 
-The policy gate in `src/policy.ts` currently only allows WAX Testnet and Jungle 4, and it requires the matching symbol: WAX on WAX Testnet, A on Jungle 4. To let an agent propose a transfer on Telos or XPR, add the chain id to the allow-list and give the agent an alias that resolves to a real account on that chain. The gate still refuses `updateauth`, `setcode`, and free-typed recipient names.
+The gate still refuses `updateauth`, `setcode`, and free-typed recipient names.
 
 ## Testnets first, then mainnets
 
-Start on WAX Testnet or Jungle 4. The same proposal shape works on the mainnets once the agent has a funded account and the policy gate has been widened. The course does not broadcast on any of them.
+Start on WAX Testnet or Jungle 4. Opt into other testnets deliberately. Mainnets are never a default or a soft option in this course.
