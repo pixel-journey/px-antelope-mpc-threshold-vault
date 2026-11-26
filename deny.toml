@@ -1,0 +1,34 @@
+# Supply-chain gate for Phase R. No threshold engines in the workspace yet.
+# When MPC crates are added in R.2, this file must still pass.
+
+[advisories]
+version = 2
+yanked = "deny"
+
+[licenses]
+version = 2
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Unicode-3.0",
+  "Zlib",
+  "CC0-1.0",
+]
+confidence-threshold = 0.8
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+deny = [
+  { name = "rug", reason = "LGPL GMP — incompatible with MIT Pixel Journey repos" },
+  { name = "gmp-mpfr-sys", reason = "LGPL GMP" },
+  { name = "cggmp21", reason = "Superseded; CVE-2025-66016 / 66017 lineage" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
