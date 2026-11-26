@@ -1,41 +1,30 @@
-# What a developer or an agent can use today
+# Callable today
 
 ```bash
 npm test && npm run check-skills
+cargo test -p antelope-crypto-format   # if Rust toolchain present
 ```
 
-## Agent path
-
-```ts
-import {
-  listStrategiesTool,
-  runStrategyTool,
-  simulateProposal,
-  broadcastStatus,
-} from "./mcp.js";
-import { evaluatePushReadiness } from "./broadcast.js";
-import { MUSEUM_CARDS } from "./museum.js";
-import { CHAINS } from "./digest.js";
-
-listStrategiesTool({ expect: "allow" });
-runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
-broadcastStatus(CHAINS.waxTestnet);
-MUSEUM_CARDS.length; // structured CVE cards
-evaluatePushReadiness({ /* … */ }); // final stage gates
-```
+## TypeScript
 
 | Surface | Module |
 | --- | --- |
 | MCP (9 tools) | `mcp.ts` |
-| Offline compute fixtures | `simulate.ts` |
-| Push readiness | `broadcast.ts` / [PUSH.md](PUSH.md) |
-| Lab RPC builders | `rpc.ts` |
-| Museum cards + demos | `museum.ts` |
-| Strategies / policy / lab sign | `strategies.ts` / `policy.ts` / `labsign.ts` |
-| Skills CI | `scripts/check-skills.mjs` |
+| Simulate fixtures | `simulate.ts` |
+| Push readiness | `broadcast.ts` |
+| Engine registry (mock only) | `threshold.ts` |
+| Shared vectors | `testdata/vectors.json` |
+| Museum cards | `museum.ts` |
 
-## Skills
+```ts
+import { runStrategyTool } from "./mcp.js";
+import { createEngine, listEngines } from "./threshold.js";
 
-`antelope-agent-propose` · `antelope-agentic-payments` · `antelope-mpc-sig-format` · `mpc-security-audit` · `antelope-network-scope`
+runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
+listEngines();
+createEngine("educational-mock"); // only available id
+```
 
-[GAP-AUDIT.md](GAP-AUDIT.md) · [AGENT-RECIPE.md](AGENT-RECIPE.md) · [ATTACK-MUSEUM.md](ATTACK-MUSEUM.md)
+## Rust R.1
+
+`antelope-crypto-format`: K1 canonical + Jungle 4 digest. [RUST.md](RUST.md) · [ENGINE.md](ENGINE.md)
