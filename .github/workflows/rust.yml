@@ -1,0 +1,36 @@
+name: rust
+
+on:
+  push:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "deny.toml"
+      - "crates/**"
+      - "testdata/**"
+      - ".github/workflows/rust.yml"
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "deny.toml"
+      - "crates/**"
+      - "testdata/**"
+      - ".github/workflows/rust.yml"
+
+jobs:
+  format-crate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: test antelope-crypto-format
+        run: cargo test -p antelope-crypto-format
+      - name: clippy
+        run: cargo clippy -p antelope-crypto-format --all-targets -- -D warnings
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+          arguments: --all-features
