@@ -6,8 +6,8 @@ This repository does not sign and does not broadcast. The pieces below are usabl
 
 - Call `createPolicy().propose(...)` from `src/policy.ts`. It returns `{ ok, reason, account }`. It refuses mainnets, free-typed recipients, `updateauth`, long memos, and amounts over the cap.
 - Read [docs/AGENT-STRATEGIES.md](AGENT-STRATEGIES.md) for the four tools an agent is allowed to call and the three share roles.
+- Call `handoff()` from `src/dryrun.ts` after an allow. It binds the proposal. It does not pack and it does not sign. See [docs/HANDOFF.md](HANDOFF.md).
 - Import `PLAYBOOKS` from `src/playbooks.ts` to see, per network, the symbol and which actions the default gate allows. The catalog does not widen the gate.
-- Walk [docs/DECIDE.md](DECIDE.md) before every proposal. Stop at the first refusal.
 
 ## For a developer
 
