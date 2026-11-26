@@ -6,14 +6,14 @@ Each level says what the idea is, and whether this repository runs it.
 | --- | --- | --- |
 | 1 | Shamir reconstruction puts the secret on one machine. Real threshold ECDSA multiplies shares and does not open `x`. | Yes, as a toy over the prime 101. Not a DKG. |
 | 2 | `PUB_K1_` and legacy `EOS` checksums differ by the ASCII suffix. | Yes, Vector 1 only. No key generation. |
-| 3 | The K1 canonical gauntlet, low-S, and the recovery-id flip. | Yes. The fractions are exact byte counts, not a live signer. |
-| 4 | Cold owner, hot active, `linkauth` for a bot. | `Authority.sort()` is tested with WharfKit 4.0.2. No account is created. No transaction is broadcast. |
+| 3 | The K1 canonical gauntlet, low-S, recovery-id flip, **presign queue r-filter / burn**, R1 preference. | Yes. Counts + `src/presign.ts` + `src/curve.ts`. Not a live ceremony. |
+| 4 | Cold owner, hot active, `linkauth` for a bot. **Payload shapes** + WharfKit `Authority.sort()`. | Yes for shapes (`src/permissions.ts`) and sort test. No account created. No broadcast. |
 | 5 | A passkey can wrap a local share. An OAuth wallet provider is a different trust decision. | Reading only. No WebAuthn call. |
 | 6 | Nonce reuse recovers `x`. Unlength-prefixed hashes collide. | Yes, on fixtures created inside the test. |
-| 7 | A model proposes a transfer. The policy gate refuses mainnet, `updateauth`, and a memo that smuggles an account. | Yes, in memory. No MCP process. |
+| 7 | A model proposes a transfer. The policy gate refuses mainnet, `updateauth`, and a memo that smuggles an account. **Strategy + playbook catalogs.** | Yes, in memory. No MCP process. |
 | 8 | Post-quantum signatures and two-round class-group ECDSA are not Antelope authority types yet. `updateauth` is how an account would move later, without moving balances. | Reading only. |
 
-Do not mark a level "done" because the table exists. Levels 4, 5, and 8 have no executable lab in this repo.
+Do not mark a level "done" because the table exists. Levels 5 and 8 have no executable lab in this repo. Levels 3, 4, and 7 are deeper than the first cut of this course.
 
 ## Level 1 — do not reassemble
 
@@ -23,13 +23,13 @@ Shamir sharing of a number is not threshold ECDSA. The test splits 42, interpola
 
 `RIPEMD-160(point || "K1")` and `RIPEMD-160(point)` produce different four-byte checksums, so `PUB_K1_…` and `EOS…` differ even for the same 33 bytes. R1 uses the suffix `"R1"`. WA is a separate WebAuthn encoding and cannot hold the threshold key.
 
-## Level 3 — canonical bytes
+## Level 3 — canonical bytes and the presign pool
 
-Read the table in [EDUCATION.md](../EDUCATION.md). After you can compute 32640 by hand from the two-byte rule, the rest of the MPC latency story is just "a WAN retry costs a whole ceremony, so filter `r` before you store a presignature."
+Read the table in [EDUCATION.md](../EDUCATION.md). After you can compute 32640 by hand from the two-byte rule, the rest of the MPC latency story is "a WAN retry costs a whole ceremony, so filter `r` before you store a presignature." [src/presign.ts](../src/presign.ts) enforces that queue policy on synthetic bytes. Prefer R1 online via [src/curve.ts](../src/curve.ts).
 
 ## Level 4 — permissions, still native
 
-No custom contract. `owner` is a weighted cold authority. `active` is the single MPC public key, if you ever have one. `linkauth` caps a custom permission to one action. WharfKit 4.0.2's `Authority.sort()` is what puts keys, accounts, and waits into the order nodeos checks. The test builds an unsorted two-key authority and checks the order after `sort()`. It does not pack an `updateauth` transaction and it does not send one.
+No custom contract. `owner` is a weighted cold authority. `active` is the single MPC public key, if you ever have one. `linkauth` caps a custom permission to one action. [src/permissions.ts](../src/permissions.ts) builds those shapes with `executed: false`. WharfKit 4.0.2's `Authority.sort()` is what puts keys, accounts, and waits into the order nodeos checks. The test builds an unsorted two-key authority and checks the order after `sort()`. It does not pack an `updateauth` transaction and it does not send one.
 
 The client is `SessionKit` from `@wharfkit/session`, with `@wharfkit/antelope` at the same version. eosjs and UAL are older stacks. [docs/LICENSES.md](LICENSES.md) is why the course can depend on WharfKit and still not vendor an AGPL engine.
 
@@ -50,9 +50,9 @@ x = inv(r) * (s1 * k - m1)    mod n
 
 Bare string concatenation makes `["ab","c"]` and `["a","bc"]` the same hash. Length prefixes do not. That is the shape of the TSSHOCK delimiter bug, not a copy of any vendor's transcript code. [Verichains' TSSHOCK page](https://verichains.io/tsshock/) is the primary writeup.
 
-## Level 7 — the gate
+## Level 7 — the gate and the catalogs
 
-The allowlist is deliberately boring: one contract, one action, three aliases, a small cap, a short memo, two testnets, a kill switch. If a future MCP tool grows a `sign_digest` method, it has left this course.
+The allowlist is deliberately boring: one contract, one action, three aliases, a small cap, a short memo, two testnets, a kill switch. Named strategies and playbooks expand what an agent can *see* and *practice refusing* without widening that allowlist. If a future MCP tool grows a `sign_digest` method, it has left this course.
 
 ## Level 8 — later curves
 
