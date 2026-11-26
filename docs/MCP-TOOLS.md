@@ -1,27 +1,27 @@
-# MCP-shaped tools (no threshold sign, no broadcast)
+# MCP-shaped tools
 
 Callable surface: [src/mcp.ts](../src/mcp.ts).
 
 | Tool | Function | Lab SIG? |
 | --- | --- | --- |
 | `list_networks` | `listNetworks()` | No |
-| `list_strategies` | `listStrategiesTool({ expect?, tag? })` | No |
+| `list_strategies` | `listStrategiesTool(...)` | No |
 | `inspect_playbook` | `inspectPlaybook(chainId)` | No |
 | `propose_transfer` | `proposeTransfer(proposal)` | No |
-| `run_strategy` | `runStrategyTool(id, from, now, options?)` | Yes, after allow |
+| `run_strategy` | `runStrategyTool(...)` | Yes, after allow |
 | `check_status` | `checkStatus()` | No |
 | `lab_sign_allowed` | `labSignAllowed(...)` | Yes (lab only) |
-| `simulate_proposal` | `simulateProposal(proposal, decision)` | No |
+| `simulate_proposal` | `simulateProposal(...)` | No |
 | `broadcast_status` | `broadcastStatus(chainId)` | No |
+| `list_engines` | `listEnginesTool()` | No |
 
-Session policy: `resetSessionPolicy({ extraLabChainIds })` then `proposeTransfer` / `checkStatus`.
+## Intentionally not MCP tools
 
-`simulate_proposal` is **local** (policy + broadcast lock). It does not call nodeos. Production should use `/v1/chain/compute_transaction` on a lab endpoint after an allow.
+| Action | Why |
+| --- | --- |
+| `sign_digest` | Co-signer must hash packed tx |
+| Free-text recipients | Aliases only |
+| `updateauth` / `setcode` | Human / cold path |
+| **`push_transaction`** | Use `pushLabTransaction` from a controlled script after readiness — not model-fired |
 
-`broadcast_status` reports candidate testnets; `courseBroadcasts` is always `false`.
-
-## Still forbidden as tools
-
-`sign_digest`, free-text recipients, `updateauth` / `setcode`, mainnet send.
-
-Skill: [skills/antelope-agent-propose](../skills/antelope-agent-propose/SKILL.md) · [skills/antelope-agentic-payments](../skills/antelope-agentic-payments/SKILL.md).
+Lab HTTP helpers: [src/labClient.ts](../src/labClient.ts) · [PUSH.md](PUSH.md).
