@@ -1,6 +1,6 @@
-# Lab RPC catalog (no push)
+# Lab RPC catalog
 
-[src/rpc.ts](../src/rpc.ts) lists public lab endpoints and builds **request shapes** for dry-run style calls. It does not fetch by default and never offers `push_transaction`.
+[src/rpc.ts](../src/rpc.ts) lists public lab endpoints and builds request shapes. It does not fetch by default.
 
 ## Endpoints
 
@@ -11,27 +11,26 @@
 | Telos Testnet | operator opt-in | `https://telostestnet.greymass.com` |
 | XPR Testnet | operator opt-in | `https://proton-testnet.greymass.com` |
 
-## Allowed educational paths
+## Paths
+
+**Early / middle curriculum**
 
 - `/v1/chain/get_info`
 - `/v1/chain/get_required_keys`
-- `/v1/chain/compute_transaction` — execute without committing state
+- `/v1/chain/compute_transaction`
 - `/v1/chain/send_read_only_transaction`
 
-`buildComputeTransactionRequest` only accepts chains that pass `evaluateBroadcast` (testnet candidates). It still does not HTTP-post.
-
-## Forbidden
+**Final curriculum stage** (see [PUSH.md](PUSH.md))
 
 - `/v1/chain/push_transaction`
 - `/v1/chain/send_transaction2`
 
-`buildPushTransactionRequest` always throws. See [src/broadcast.ts](../src/broadcast.ts).
+`buildPushTransactionRequest` returns a URL only when `evaluatePushReadiness` is fully green **and** still sets `httpSendImplemented: false` in this package. That is “learn the endpoint,” not “we shipped a silent sender.”
 
-## Relation to `simulate.ts`
+## Local vs node
 
-| Module | Contact node? | Purpose |
+| Module | Node contact | Role |
 | --- | --- | --- |
-| `simulate.ts` | No | Policy + broadcast lock only |
-| `rpc.ts` | No (builders only) | Correct URL/body shape for a later lab client |
-
-A Phase W client may `fetch` lab `compute_transaction` after policy allow, still calling `refuseBroadcast` before any send.
+| `simulate.ts` | No | Policy + broadcast candidate checks |
+| `rpc.ts` | Builders only | Correct URLs/bodies for lab clients |
+| Phase W (future) | Optional `fetch` | Real dry-run / testnet push under readiness |
