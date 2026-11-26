@@ -1,12 +1,25 @@
 # Antelope MPC, without a mainnet signer
 
 > **Status:** educational reference for agentic payments on Antelope. Unaudited. The policy gate defaults to testnets; the network map includes the mainnets. A lab signer produces a recoverable SIG_K1_ on those testnets.  
-> **What `npm test` does:** locks the K1 canonical byte rule, one published public-key checksum, one Jungle 4 signing digest, WharfKit 4.0.2 recovering the same keys, a policy gate, a lab signature recovery, and two museum calculations.  
-> **What it does not do:** real threshold signing, WebAssembly, a custom wallet plugin, a relay, a key share, or a broadcast. `src/threshold.ts` is an educational mock that walks DKG and presign and then refuses to sign.
+> **What `npm test` does:** locks the K1 canonical byte rule, published key/digest vectors, WharfKit 4.0.2 recovery, policy gate, strategy catalog, presign queue policy, hybrid permission shapes, MCP tool surface, and WalletPlugin stub refusals.  
+> **What it does not do:** real threshold signing, WebAssembly engines, a live co-signing WalletPlugin, a relay, a key share, or a broadcast. `src/threshold.ts` walks DKG/presign and refuses to sign. `src/walletPlugin.ts` refuses threshold sign.
 
 Antelope already has a way to rotate a key without moving the assets: the account is a name, and `eosio::updateauth` changes who may act for it. An Ethereum address cannot do that, because the address is the key. Threshold ECDSA still matters here, because a single `SIG_K1_` or `SIG_R1_` hides the signer set and does not need an `eosio.msig` proposal for every game action. It does not replace the cold owner multisig. The cold owner is how you throw away a bad active key.
 
 This repository is the reading course and the byte-level lab for that idea. It is not a custody product. No public audit of the engines named below was repeated in this repository, and a custom orchestration of those engines should not hold mainnet value.
+
+## Agent path (today)
+
+```ts
+import { runStrategyTool, listStrategiesTool, listNetworks } from "./src/mcp.js";
+
+listNetworks();
+listStrategiesTool({ expect: "allow" });
+const tip = runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
+// tip.decision.ok, tip.lab.signature — lab key only, not a threshold share
+```
+
+Four allows: `wax-testnet-tip`, `treasury-tip`, `jungle-tip`, `peer-tip`. See [docs/TODAY.md](docs/TODAY.md).
 
 ## Read in this order
 
@@ -14,34 +27,27 @@ This repository is the reading course and the byte-level lab for that idea. It i
 | --- | --- |
 | [EDUCATION.md](EDUCATION.md) | The course: permissions, the four protocol generations, the K1 trap, the policy gate |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Hybrid thesis: MPC on active, cold owner multisig, what this tree runs vs later |
+| [docs/TODAY.md](docs/TODAY.md) | What a developer or an agent can call right now |
 | [docs/CURRICULUM.md](docs/CURRICULUM.md) | Eight levels, and which of them this repo actually runs |
 | [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) | What the tests refuse, and what they cannot prove |
-| [docs/LICENSES.md](docs/LICENSES.md) | Why this course stays MIT, and why WharfKit (BSD-3-Clause) is the client we depend on |
-| [docs/NETWORKS.md](docs/NETWORKS.md) | Chain ids, token symbols, and endpoints for WAX, Vaulta, Telos, XPR Network, and UX |
-| [docs/AGENTIC-PAYMENTS.md](docs/AGENTIC-PAYMENTS.md) | How an agent proposes a transfer, how the policy gate checks it, and why the account name matters |
-| [docs/AGENT-RECIPE.md](docs/AGENT-RECIPE.md) | The path an agent can run today: pick a lab network, propose, sign with the lab key |
-| [docs/LAB-SIGNER.md](docs/LAB-SIGNER.md) | A throwaway lab key that signs an allowed proposal and can be recovered |
-| [docs/WITHOUT-WHARFKIT.md](docs/WITHOUT-WHARFKIT.md) | What you still have to get right if the agent cannot use the WharfKit packages |
-| [docs/STRATEGIES.md](docs/STRATEGIES.md) | Named moves an agent can run today, including the ones the gate refuses |
-| [docs/AGENT-STRATEGIES.md](docs/AGENT-STRATEGIES.md) | Three share roles, four tools an agent may call, and per-chain opportunities |
-| [docs/PROTOCOL-GENERATIONS.md](docs/PROTOCOL-GENERATIONS.md) | GG18/GG20, CGGMP24, DKLs23, and the 2025–2026 class-group protocols |
-| [docs/K1-CANONICAL.md](docs/K1-CANONICAL.md) | The byte check, low-S, the recovery-id flip, and r-filtering |
-| [docs/ATTACK-MUSEUM.md](docs/ATTACK-MUSEUM.md) | K1 canonical boss fight, nonce reuse, concat collisions, Paillier gaps |
-| [docs/POST-QUANTUM.md](docs/POST-QUANTUM.md) | What Antelope can verify today, and what would need a new key type |
-| [docs/CHAIN-OPPORTUNITIES.md](docs/CHAIN-OPPORTUNITIES.md) | Per-chain actions an agent can propose once the gate allows the chain id |
-| [docs/HANDOFF.md](docs/HANDOFF.md) | The record an agent hands a co-signer, and why that record is not a signing digest |
-| [docs/TODAY.md](docs/TODAY.md) | What a developer or an agent can call in this repository right now |
-| [docs/PERMISSIONS.md](docs/PERMISSIONS.md) | owner, active, and a linked agent permission |
-| [docs/MCP-TOOLS.md](docs/MCP-TOOLS.md) | The four calls an agent may make, and the fields the policy gate accepts |
-| [docs/PRESIGNATURES.md](docs/PRESIGNATURES.md) | One-time nonces, r-filtering, refresh, and why the relay is not a party |
-| [docs/ENTROPY.md](docs/ENTROPY.md) | Why game randomness is not a signing nonce |
-| [docs/SOURCES.md](docs/SOURCES.md) | Primary sources, and what was rechecked here |
+| [docs/MCP-TOOLS.md](docs/MCP-TOOLS.md) | Callable MCP-shaped tools in `src/mcp.ts` |
+| [docs/WALLET-PLUGIN.md](docs/WALLET-PLUGIN.md) | Educational WalletPluginMPC contract (refuses live sign) |
+| [docs/STRATEGIES.md](docs/STRATEGIES.md) | Named moves, allows, and intentional refusals |
+| [docs/PRESIGNATURES.md](docs/PRESIGNATURES.md) | Presign queue: r-filter, single-use, burn, refresh |
+| [docs/PERMISSIONS.md](docs/PERMISSIONS.md) | Hybrid `updateauth` / `linkauth` shapes |
+| [docs/K1-CANONICAL.md](docs/K1-CANONICAL.md) | The byte check, low-S, recovery-id flip |
+| [docs/PROTOCOL-GENERATIONS.md](docs/PROTOCOL-GENERATIONS.md) | GG18 → CGGMP24 → DKLs23 → class-group research |
+| [docs/ATTACK-MUSEUM.md](docs/ATTACK-MUSEUM.md) | Canonical boss fight, nonce reuse, Paillier gaps |
+| [docs/CHAIN-OPPORTUNITIES.md](docs/CHAIN-OPPORTUNITIES.md) | Per-chain and cross-chain agent opportunities |
+| [docs/NETWORKS.md](docs/NETWORKS.md) | Chain ids and symbols |
+| [docs/LICENSES.md](docs/LICENSES.md) | MIT course + BSD-3 WharfKit; no AGPL engines in-tree |
+| [docs/SOURCES.md](docs/SOURCES.md) | Primary sources |
 
 ```bash
 npm test
 ```
 
-Thirty-two tests. Node 22 was used when they were last run. `@wharfkit/antelope` and `@wharfkit/session` are pinned at **4.0.2** (BSD-3-Clause). `@noble/curves` is used only inside the nonce-reuse fixture.
+`@wharfkit/antelope` and `@wharfkit/session` are pinned at **4.0.2** (BSD-3-Clause). `@noble/curves` is used only inside the nonce-reuse fixture.
 
 ## The number the tests lock
 
@@ -53,43 +59,35 @@ That count is a byte model. It is not a measurement of a WAN signing ceremony, a
 
 On Antelope, the library to teach is WharfKit, not eosjs and not UAL. `SessionKit` takes the chain list and the wallet plugins, `login` returns a session, and `session.transact` sends. This course constructs a `SessionKit` for WAX Testnet and Jungle 4 with **no** wallet plugin and does not call `login` or `transact`.
 
-`@wharfkit/session` 4.0.2 re-exports the antelope types. The tests use that one copy:
+`@wharfkit/session` 4.0.2 re-exports the antelope types. The tests use that one copy for Vector 1, Jungle 4 digests, K1/R1 recovery, and `Authority.sort()`.
 
-- `PublicKey` matches Vector 1, including the legacy `EOS` string.
-- `Transaction.signingDigest` matches the Jungle 4 digest our own SHA-256 computes.
-- `Signature.recoverDigest` returns the published K1 key and the published R1 key for those vectors.
-- `Authority.sort()` orders keys the way `updateauth` requires.
-
-The blueprint named WharfKit 4.0.1. The registry's current 4.x line on 26 November 2026 was **4.0.2**, and 4.0.2 still recovers those vectors, so the pin is 4.0.2. Bump `@wharfkit/antelope` and `@wharfkit/session` together when a newer 4.x is what you want students to install. Do not add `@wharfkit/wallet-plugin-wombat`. The license map is [docs/LICENSES.md](docs/LICENSES.md). MIT on our notes does not stop that: WharfKit is BSD-3-Clause, which an MIT course may depend on. AGPL and non-commercial engines stay as links, not as files in this tree.
+The blueprint named WharfKit 4.0.1. The registry's current 4.x line on 26 November 2026 was **4.0.2**, and 4.0.2 still recovers those vectors, so the pin is 4.0.2. Do not add `@wharfkit/wallet-plugin-wombat`.
 
 ## Engines named, and not imported
 
 | Engine | Why it is on the reading list | Why it is not in this package |
 | --- | --- | --- |
-| [0xCarbon/DKLs23](https://github.com/0xCarbon/DKLs23) v0.6.2 | 3-round threshold ECDSA, MIT or Apache-2.0, K1 and R1 crates published with that tag | Not compiled here. Treat it as unaudited for mainnet use unless you have read an audit yourself. |
-| [LFDT-Lockness/cggmp24](https://github.com/LFDT-Lockness/cggmp21) | 1 online round after preprocessing. [CVE-2025-66016](https://www.cve.org/CVERecord?id=CVE-2025-66016) says versions before 0.6.3 miss a ZK check, and recommends 0.7.0-alpha.2 or newer for the extra checks. | Not compiled here. Do not enable a `backend-rug` feature. Do not enable `insecure-assume-preimage-known`. |
-| silence-laboratories/dkls23 | A different codebase, with a non-commercial license | Forbidden in an MIT Pixel Journey repo |
-| entropyxyz/synedrion | AGPL-3.0 | Forbidden here for the same reason |
+| [0xCarbon/DKLs23](https://github.com/0xCarbon/DKLs23) v0.6.2 | 3-round threshold ECDSA, MIT or Apache-2.0, K1 and R1 | Not compiled. Treat as unaudited for mainnet. |
+| [LFDT-Lockness/cggmp24](https://github.com/LFDT-Lockness/cggmp21) | 1 online round; use ≥ 0.7.0-alpha.2 for CVE fixes | Not compiled. No `backend-rug`. |
+| silence-laboratories/dkls23 | Different license | Forbidden in an MIT Pixel Journey repo |
+| entropyxyz/synedrion | AGPL-3.0 | Forbidden here |
 
-`npm test` scans `package.json` for those names.
+`npm test` scans `package.json` for banned names.
 
 ## Lab chain ids
-
-Defaults, if you later build a signer, stay on testnets:
 
 | Network | Chain id |
 | --- | --- |
 | WAX Testnet | `f16b1833c747c43682f4386fca9cbb327929334a762755ebec17f6f23c9b8a12` |
 | Jungle 4 | `73e4385a2708e6d7048834fbc1079f2fabb17b3c125b146af438971e90716c4d` |
 
-WAX mainnet, Vaulta (`aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906`), and Telos mainnet are in the source as ids the policy gate refuses. `@wharfkit/session` 4.0.2 also carries Telos Testnet, Proton, Proton Testnet, and UX. Those ids are now in `CHAINS` and in `PLAYBOOKS`. The policy gate still does not select them. Proton and XPR are the same chain id in that package. Vaulta and EOS are the same chain id.
+Mainnets and other testnets appear in `CHAINS` / playbooks / strategies as **catalogued refusals** until an operator opts in.
 
 ## Related courses
 
-- [wax-multi-sig-proposal-builder-and-simulator](https://github.com/pixel-journey/wax-multi-sig-proposal-builder-and-simulator) is the on-chain `eosio.msig` lab. MPC does not replace it.
-- [wax-permission-visualizer-and-editor](https://github.com/pixel-journey/wax-permission-visualizer-and-editor) is the permission-tree lab. `updateauth` and `linkauth` live there as previews, not as a broadcast.
-- [wax-wharfkit-session-keys-and-linked-permissions](https://github.com/pixel-journey/wax-wharfkit-session-keys-and-linked-permissions) is the session-key lab. A session key is not a threshold share.
-- [px-orng-v3-randnotify-starter](https://github.com/pixel-journey/px-orng-v3-randnotify-starter) is WAX RNG. A transaction id is not a source of MPC nonces.
-- Official WAX RNG writeup: [create a WAX RNG smart contract](https://docs.wax.io/build/tutorials/create-wax-rng-smart-contract/rng_sample). `orng.wax` exists on WAX, not as a general Antelope service.
+- [wax-multi-sig-proposal-builder-and-simulator](https://github.com/pixel-journey/wax-multi-sig-proposal-builder-and-simulator) — on-chain `eosio.msig`
+- [wax-permission-visualizer-and-editor](https://github.com/pixel-journey/wax-permission-visualizer-and-editor) — permission tree
+- [wax-wharfkit-session-keys-and-linked-permissions](https://github.com/pixel-journey/wax-wharfkit-session-keys-and-linked-permissions) — session keys ≠ threshold shares
+- [px-orng-v3-randnotify-starter](https://github.com/pixel-journey/px-orng-v3-randnotify-starter) — WAX RNG is not an MPC nonce source
 
 MIT. Pixel Journey.
