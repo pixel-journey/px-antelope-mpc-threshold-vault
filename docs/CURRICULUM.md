@@ -1,0 +1,57 @@
+# Eight levels
+
+Each level says what the idea is, and whether this repository runs it.
+
+| Level | Idea | Run here? |
+| --- | --- | --- |
+| 1 | Shamir reconstruction puts the secret on one machine. Real threshold ECDSA multiplies shares and does not open `x`. | Yes, as a toy over the prime 101. Not a DKG. |
+| 2 | `PUB_K1_` and legacy `EOS` checksums differ by the ASCII suffix. | Yes, Vector 1 only. No key generation. |
+| 3 | The K1 canonical gauntlet, low-S, and the recovery-id flip. | Yes. The fractions are exact byte counts, not a live signer. |
+| 4 | Cold owner, hot active, `linkauth` for a bot. | Reading only. No account is created. No transaction is broadcast. |
+| 5 | A passkey can wrap a local share. An OAuth wallet provider is a different trust decision. | Reading only. No WebAuthn call. |
+| 6 | Nonce reuse recovers `x`. Unlength-prefixed hashes collide. | Yes, on fixtures created inside the test. |
+| 7 | A model proposes a transfer. The policy gate refuses mainnet, `updateauth`, and a memo that smuggles an account. | Yes, in memory. No MCP process. |
+| 8 | Post-quantum signatures and two-round class-group ECDSA are not Antelope authority types yet. `updateauth` is how an account would move later, without moving balances. | Reading only. |
+
+Do not mark a level "done" because the table exists. Levels 4, 5, and 8 have no executable lab in this repo.
+
+## Level 1 — do not reassemble
+
+Shamir sharing of a number is not threshold ECDSA. The test splits 42, interpolates, and gets 42 back. That is the custody failure, shown small so it is obvious. Beaver triples and oblivious transfer exist so the product `k^{-1} * x` can be formed without either factor landing in one process. This course does not implement those protocols.
+
+## Level 2 — the checksum suffix
+
+`RIPEMD-160(point || "K1")` and `RIPEMD-160(point)` produce different four-byte checksums, so `PUB_K1_…` and `EOS…` differ even for the same 33 bytes. R1 uses the suffix `"R1"`. WA is a separate WebAuthn encoding and cannot hold the threshold key.
+
+## Level 3 — canonical bytes
+
+Read the table in [EDUCATION.md](../EDUCATION.md). After you can compute 32640 by hand from the two-byte rule, the rest of the MPC latency story is just "a WAN retry costs a whole ceremony, so filter `r` before you store a presignature."
+
+## Level 4 — permissions, still native
+
+No custom contract. `owner` is a weighted cold authority. `active` is the single MPC public key, if you ever have one. `linkauth` caps a custom permission to one action. Sorting of authority keys is a nodeos requirement (`Authority.sort()` in WharfKit). This repo does not call it, because it does not build an authority.
+
+The on-chain multisig lab is [wax-multi-sig-proposal-builder-and-simulator](https://github.com/pixel-journey/wax-multi-sig-proposal-builder-and-simulator).
+
+## Level 5 — passkeys are wrappers
+
+WAX My Cloud Wallet's passkey migration and XPR's WebAuth wallet are product choices. They are not threshold ECDSA. A November 2026 writeup of the Web3Auth / Keplr incident is the reason a social-login vendor is not the same as a share you encrypted yourself: [Aviatrix's note](https://aviatrix.ai/threat-research-center/web3auth-flaw-exploited-steal-keplr-crypto-2026/). Read it as journalism, then check the vendor's own post-mortem before you cite a dollar figure in a paper. This course does not re-investigate that incident.
+
+## Level 6 — two museum pieces
+
+Nonce reuse, on a scalar this test invented:
+
+```text
+k = (m1 - m2) * inv(s1 - s2)  mod n
+x = inv(r) * (s1 * k - m1)    mod n
+```
+
+Bare string concatenation makes `["ab","c"]` and `["a","bc"]` the same hash. Length prefixes do not. That is the shape of the TSSHOCK delimiter bug, not a copy of any vendor's transcript code. [Verichains' TSSHOCK page](https://verichains.io/tsshock/) is the primary writeup.
+
+## Level 7 — the gate
+
+The allowlist is deliberately boring: one contract, one action, three aliases, a small cap, a short memo, two testnets, a kill switch. If a future MCP tool grows a `sign_digest` method, it has left this course.
+
+## Level 8 — later curves
+
+Antelope will accept a new authority type only when the protocol adds one. Until then, ML-DSA, FROST, and class-group ECDSA are other chains' or researchers' tools. NIST's transition note is [IR 8547](https://nvlpubs.nist.gov/nistpubs/ir/2026/NIST.IR.8547.pdf). Telos's quantum testnet, if you cite it, should be cited from Telos's own posts, not from this file. `updateauth` remains the migration tool because the account name does not contain the key.

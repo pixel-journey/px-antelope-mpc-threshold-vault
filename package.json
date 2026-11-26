@@ -1,0 +1,17 @@
+{
+  "name": "px-antelope-mpc-threshold-vault",
+  "private": true,
+  "type": "module",
+  "description": "Educational Antelope MPC course. Tests lock the K1 canonical byte rule, a Jungle 4 signing digest, and a policy gate. No threshold signing. No broadcast.",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@noble/curves": "1.9.7",
+    "@noble/hashes": "1.8.0"
+  },
+  "devDependencies": {
+    "vitest": "3.2.4"
+  }
+}
