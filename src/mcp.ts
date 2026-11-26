@@ -29,7 +29,7 @@ import {
   strategiesByTag,
   type StrategyResult,
 } from "./strategies.js";
-import { listEngines } from "./threshold.js";
+import { listEngines, r2Admission } from "./threshold.js";
 
 export type McpToolName =
   | "list_networks"
@@ -77,7 +77,8 @@ export const MCP_TOOL_SPECS: readonly McpToolSpec[] = [
   },
   {
     name: "check_status",
-    description: "Return session policy audit, killed flag, and effective lab chain ids.",
+    description:
+      "Session audit, kill flag, lab chain ids, engine list, and R.2 admission blockers.",
     canProduceLabSignature: false,
   },
   {
@@ -94,12 +95,13 @@ export const MCP_TOOL_SPECS: readonly McpToolSpec[] = [
   {
     name: "broadcast_status",
     description:
-      "Testnet candidate check. Push is end-stage via evaluatePushReadiness.",
+      "Testnet candidate check. Push is end-stage via evaluatePushReadiness, not this tool.",
     canProduceLabSignature: false,
   },
   {
     name: "list_engines",
-    description: "Threshold engine roadmap. Only educational-mock is constructible; sign always throws.",
+    description:
+      "Threshold engine roadmap. Only educational-mock is constructible. R.2 admission is on check_status.",
     canProduceLabSignature: false,
   },
 ];
@@ -176,6 +178,7 @@ export function checkStatus() {
     sessionOptions,
     httpPushImplemented: false as const,
     engines: listEngines(),
+    r2: r2Admission(),
   };
 }
 
@@ -212,7 +215,7 @@ export function broadcastStatus(chainId: string) {
     ...decision,
     httpPushImplemented: false as const,
     note: decision.ok
-      ? "Testnet candidate. Push is curriculum end-stage — see docs/PUSH.md."
+      ? "Testnet candidate. Push is an operator script (pushLabTransaction), not this tool."
       : decision.reason,
   };
 }
