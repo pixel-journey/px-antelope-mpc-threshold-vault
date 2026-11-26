@@ -19,6 +19,7 @@ describe("MCP-shaped tools", () => {
     const names = MCP_TOOL_SPECS.map((t) => t.name);
     expect(names).toContain("simulate_proposal");
     expect(names).toContain("broadcast_status");
+    expect(names).toContain("list_engines");
   });
 
   it("lists networks with broadcast evaluation", () => {
@@ -52,7 +53,10 @@ describe("MCP-shaped tools", () => {
     expect(clean.simulation.safeForCoSign).toBe(true);
     const bad = simulateProposal(proposal, ok, "inline-escalation");
     expect(bad.simulation.safeForCoSign).toBe(false);
-    expect(checkStatus().httpPushImplemented).toBe(false);
+    const status = checkStatus();
+    expect(status.httpPushImplemented).toBe(false);
+    expect(status.r2.ready).toBe(false);
+    expect(status.r2.blockers).toContain("audit");
     killPolicy("drill");
     expect(checkStatus().killed).toBe(true);
   });
