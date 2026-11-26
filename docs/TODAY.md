@@ -1,11 +1,12 @@
 # What a developer or an agent can use today
 
-This repository does not sign and does not broadcast. The pieces below are usable now.
+This repository does not broadcast. The lab signer produces a recoverable SIG_K1_ on a lab chain. It is not a threshold share.
 
 ## For an agent
 
 - Call `createPolicy().propose(...)` from `src/policy.ts`. It returns `{ ok, reason, account }`. It refuses mainnets, free-typed recipients, `updateauth`, long memos, and amounts over the cap.
 - Read [docs/AGENT-STRATEGIES.md](AGENT-STRATEGIES.md) for the four tools an agent is allowed to call and the three share roles.
+- Call `signAllowed()` from `src/labsign.ts` after an allow on a lab chain. It returns a recoverable `SIG_K1_` from a throwaway key. See [docs/LAB-SIGNER.md](LAB-SIGNER.md).
 - Call `handoff()` from `src/dryrun.ts` after an allow. It binds the proposal. It does not pack and it does not sign. See [docs/HANDOFF.md](HANDOFF.md).
 - Import `PLAYBOOKS` from `src/playbooks.ts` to see, per network, the symbol and which actions the default gate allows. The catalog does not widen the gate.
 

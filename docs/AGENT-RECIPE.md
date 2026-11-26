@@ -1,6 +1,6 @@
 # A recipe an agent can run today
 
-This is the whole path that exists in this repository. It does not sign and it does not broadcast.
+This is the path an agent can run today. The lab signer produces a recoverable SIG_K1_ after the gate allows the proposal. It does not broadcast, and it is not a threshold share.
 
 ## 1. Pick a network
 
@@ -36,9 +36,9 @@ const decision = policy.propose({
 
 `decision.ok` is true only when the chain is a lab, the alias is known, the amount is under the cap, the memo is short ASCII, and the action is `eosio.token::transfer`. `decision.account` is the resolved name. The model never typed that name.
 
-## 3. Stop
+## 3. Stop or continue
 
-If `decision.ok` is false, stop. Do not rewrite the proposal to sneak past the reason. If `decision.ok` is true, you still do not have a signature. Hand the packed transaction to a co-signer that is not this process, or stop and wait for a human.
+If `decision.ok` is false, stop. Do not rewrite the proposal to sneak past the reason. If `decision.ok` is true, either sign with the lab key in step 5, or hand the bound fields to a co-signer that packs the real transaction.
 
 ## 4. What not to add
 
@@ -48,3 +48,15 @@ If `decision.ok` is false, stop. Do not rewrite the proposal to sneak past the r
 - A mainnet chain id, unless an operator has already widened `LAB_CHAIN_IDS` and told you.
 
 See [MCP-TOOLS.md](MCP-TOOLS.md) for the four-tool shape and [TODAY.md](TODAY.md) for what else is callable.
+
+## 5. Sign with the lab key
+
+```ts
+import { createLabKey, signAllowed, recoverLab } from "./labsign.js";
+
+const key = createLabKey();
+const signed = signAllowed(key, proposal, decision, "agent.pxj");
+recoverLab(signed) === signed.publicKey; // true on a lab chain
+```
+
+`signed.signature` is a real `SIG_K1_`. It is over the proposal id, not over a packed transaction. A node will not accept it. See [docs/LAB-SIGNER.md](LAB-SIGNER.md).
