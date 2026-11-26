@@ -1,7 +1,7 @@
 # Antelope MPC, without a mainnet signer
 
-> **Status:** educational reference for agentic payments on Antelope. Unaudited. The policy gate defaults to testnets; the network map includes the mainnets.  
-> **What `npm test` does:** locks the K1 canonical byte rule, one published public-key checksum, one Jungle 4 signing digest, WharfKit 4.0.2 recovering the same keys, a policy gate, and two museum calculations.  
+> **Status:** educational reference for agentic payments on Antelope. Unaudited. The policy gate defaults to testnets; the network map includes the mainnets. A lab signer produces a recoverable SIG_K1_ on those testnets.  
+> **What `npm test` does:** locks the K1 canonical byte rule, one published public-key checksum, one Jungle 4 signing digest, WharfKit 4.0.2 recovering the same keys, a policy gate, a lab signature recovery, and two museum calculations.  
 > **What it does not do:** real threshold signing, WebAssembly, a custom wallet plugin, a relay, a key share, or a broadcast. `src/threshold.ts` is an educational mock that walks DKG and presign and then refuses to sign.
 
 Antelope already has a way to rotate a key without moving the assets: the account is a name, and `eosio::updateauth` changes who may act for it. An Ethereum address cannot do that, because the address is the key. Threshold ECDSA still matters here, because a single `SIG_K1_` or `SIG_R1_` hides the signer set and does not need an `eosio.msig` proposal for every game action. It does not replace the cold owner multisig. The cold owner is how you throw away a bad active key.
@@ -18,7 +18,8 @@ This repository is the reading course and the byte-level lab for that idea. It i
 | [docs/LICENSES.md](docs/LICENSES.md) | Why this course stays MIT, and why WharfKit (BSD-3-Clause) is the client we depend on |
 | [docs/NETWORKS.md](docs/NETWORKS.md) | Chain ids, token symbols, and endpoints for WAX, Vaulta, Telos, XPR Network, and UX |
 | [docs/AGENTIC-PAYMENTS.md](docs/AGENTIC-PAYMENTS.md) | How an agent proposes a transfer, how the policy gate checks it, and why the account name matters |
-| [docs/AGENT-RECIPE.md](docs/AGENT-RECIPE.md) | The four steps an agent can run today: pick a lab network, propose, stop |
+| [docs/AGENT-RECIPE.md](docs/AGENT-RECIPE.md) | The path an agent can run today: pick a lab network, propose, sign with the lab key |
+| [docs/LAB-SIGNER.md](docs/LAB-SIGNER.md) | A throwaway lab key that signs an allowed proposal and can be recovered |
 | [docs/WITHOUT-WHARFKIT.md](docs/WITHOUT-WHARFKIT.md) | What you still have to get right if the agent cannot use the WharfKit packages |
 | [docs/AGENT-STRATEGIES.md](docs/AGENT-STRATEGIES.md) | Three share roles, four tools an agent may call, and per-chain opportunities |
 | [docs/PROTOCOL-GENERATIONS.md](docs/PROTOCOL-GENERATIONS.md) | GG18/GG20, CGGMP24, DKLs23, and the 2025–2026 class-group protocols |
@@ -38,7 +39,7 @@ This repository is the reading course and the byte-level lab for that idea. It i
 npm test
 ```
 
-Twenty-five tests. Node 22 was used when they were last run. `@wharfkit/antelope` and `@wharfkit/session` are pinned at **4.0.2** (BSD-3-Clause). `@noble/curves` is used only inside the nonce-reuse fixture.
+Twenty-eight tests. Node 22 was used when they were last run. `@wharfkit/antelope` and `@wharfkit/session` are pinned at **4.0.2** (BSD-3-Clause). `@noble/curves` is used only inside the nonce-reuse fixture.
 
 ## The number the tests lock
 
