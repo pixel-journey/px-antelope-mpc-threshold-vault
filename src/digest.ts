@@ -17,6 +17,10 @@ export const CHAINS = {
   waxMainnet: "1064487b3cd1a897ce03ae5b6a865651747e2e152090f99c1d19d44e01aea5a4",
   vaulta: "aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906",
   telos: "4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11",
+  telosTestnet: "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  xpr: "384da888112027f0321850a169f737c33e53b388aad48b5adace4bab97f437e0",
+  xprTestnet: "71ee83bcf52142d61019d95f9cc5427ba6a0d7ff8accd9e2088ae2abeaf3d3dd",
+  ux: "8fc6dce7942189f842170de953932b1f66693ad3788f766e777b6f9d22335c02",
 } as const;
 
 export const LAB_CHAIN_IDS = [CHAINS.waxTestnet, CHAINS.jungle4] as const;

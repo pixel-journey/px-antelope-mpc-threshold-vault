@@ -80,9 +80,12 @@ export function createPolicy(): Policy {
       }
       const account = ALIASES[input.alias];
       if (!account) return refuse("recipient alias is unknown");
-      if (input.symbol !== "WAX") return refuse("only WAX is in the allowlist");
+      const expectedSymbol = input.chainId === CHAINS.jungle4 ? "A" : "WAX";
+      if (input.symbol !== expectedSymbol) {
+        return refuse(`symbol must be ${expectedSymbol} on this chain`);
+      }
       if (input.amountUnits <= 0n || input.amountUnits > MAX_UNITS) {
-        return refuse("amount is outside 1..10.0000 WAX");
+        return refuse("amount is outside 1..10.0000 of the chain token");
       }
       if (input.memo.length > MAX_MEMO) return refuse("memo is longer than 64 characters");
       if (![...input.memo].every((ch) => ch.charCodeAt(0) >= 32 && ch.charCodeAt(0) <= 126)) {
