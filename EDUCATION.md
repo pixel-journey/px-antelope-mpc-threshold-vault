@@ -43,6 +43,8 @@ ECDSA is `s = k^{-1} (m + r x) mod n`. Both `k` and `x` are secrets, and they ar
 
 ## Intermediate — four generations, as a map
 
+The four generations are written out in [docs/PROTOCOL-GENERATIONS.md](docs/PROTOCOL-GENERATIONS.md). Short version:
+
 These are papers and codebases to read. This course does not run them.
 
 | Generation | What to remember | What not to ship |
@@ -144,4 +146,4 @@ Until those exist, the honest statement is the one in the README: this is a cour
 npm test
 ```
 
-You should see 15 passing tests. If a future edit changes the Jungle 4 vector, the WharfKit recovery, or the 32640 count, the edit is wrong or the rule being taught has changed. Do not "fix" the count to match a rounded percentage.
+You should see 23 passing tests. If a future edit changes the Jungle 4 vector, the WharfKit recovery, or the 32640 count, the edit is wrong or the rule being taught has changed. Do not "fix" the count to match a rounded percentage.
