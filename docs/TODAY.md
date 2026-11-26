@@ -5,59 +5,46 @@ This repository does not broadcast. The lab signer produces a recoverable SIG_K1
 ## For an agent (right now)
 
 ```ts
-import { runStrategy, listStrategyIds, strategiesByTag } from "./strategies.js";
-import { PLAYBOOKS, defaultGateActions } from "./playbooks.js";
+import { runStrategyTool, listNetworks, listStrategiesTool, checkStatus } from "./mcp.js";
 import { PresignQueue, componentBytes } from "./presign.js";
 import { hybridCustodyPlan } from "./permissions.js";
 import { recommendCurve } from "./curve.js";
+import { pluginSign, pluginLogin } from "./walletPlugin.js";
 
-const now = Math.floor(Date.now() / 1000);
-const tip = runStrategy("wax-testnet-tip", "agent.pxj", now);
-
-listStrategyIds();
-strategiesByTag("nft");
-defaultGateActions();
-recommendCurve(); // "R1" unless legacy K1 / EVM derivation is requested
-
-const q = new PresignQueue();
-q.tryEnqueue("K1", componentBytes(0x40, 0x01));
+const tip = runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
+listNetworks();
+listStrategiesTool({ expect: "allow" });
+recommendCurve(); // "R1"
 ```
 
-| Call | Module | Result |
-| --- | --- | --- |
-| `runStrategy` / catalog filters | `strategies.ts` | Gate + optional lab sign |
-| `PLAYBOOKS` / `defaultGateActions` | `playbooks.ts` | Per-network opportunity map |
-| `handoff` | `dryrun.ts` | Bound proposal record |
-| `signAllowed` | `labsign.ts` | Throwaway recoverable `SIG_K1_` |
-| `PresignQueue` | `presign.ts` | Offline r-filter, single-use, burn-on-bad-s |
-| `hybridCustodyPlan` | `permissions.ts` | owner/active/linkauth shapes, `executed: false` |
-| `recommendCurve` | `curve.ts` | R1-preferred online policy |
-| `createPolicy().propose` | `policy.ts` | The actual gate |
+| Surface | Module |
+| --- | --- |
+| MCP-shaped tools | `mcp.ts` |
+| Named strategies / playbooks | `strategies.ts` · `playbooks.ts` |
+| Policy gate | `policy.ts` |
+| Lab sign after allow | `labsign.ts` |
+| Presign queue policy | `presign.ts` |
+| Hybrid permission shapes | `permissions.ts` |
+| R1-preferred curves | `curve.ts` |
+| WalletPlugin stub (refuses live MPC sign) | `walletPlugin.ts` |
+| Canonical / digest / museum | `canonical.ts` · `digest.ts` · `museum.ts` |
 
 **Four allows today:** `wax-testnet-tip`, `treasury-tip`, `jungle-tip`, `peer-tip`.
 
 ## For a developer
 
-- Import `@wharfkit/session` **4.0.2**. Tests show digest recovery and `Authority.sort()`.
-- Use `src/digest.ts` without WharfKit ([WITHOUT-WHARFKIT.md](WITHOUT-WHARFKIT.md)).
-- Read [K1-CANONICAL.md](K1-CANONICAL.md) and run the presign queue tests before writing any K1 signer.
-- Read [ARCHITECTURE.md](../ARCHITECTURE.md) for the hybrid thesis.
+- `@wharfkit/session` **4.0.2** recovers published vectors and sorts authorities.
+- [WALLET-PLUGIN.md](WALLET-PLUGIN.md) is the contract for a future real plugin.
+- [K1-CANONICAL.md](K1-CANONICAL.md) + presign tests before any K1 signer.
+- [ARCHITECTURE.md](../ARCHITECTURE.md) for the hybrid thesis.
 
-## What "thorough" still does **not** mean
+## Still out of scope (by design)
 
-Raising educational coverage is not the same as enabling mainnet value behind an unaudited ceremony.
-
-| Still out of scope (by design) | Why |
+| Item | Why |
 | --- | --- |
 | Real DKLs23 / CGGMP24 WASM | Unaudited orchestration must not hold mainnet funds |
-| WalletPluginMPC that co-signs live | Needs a reviewed engine + relay |
-| Opening mainnet in the default gate | Operator decision, not a demo toggle |
-| `sign_digest` MCP tool | Blind hashing is a CVE class |
-
-## For a later lab
-
-- Swap `createEducationalEngine()` for a reviewed MIT/Apache WASM build; keep the refuse-to-sign posture until review is done.
-- Widen `LAB_CHAIN_IDS` deliberately (e.g. Telos Testnet) without enabling mainnet.
-- Wrap `propose` / `listStrategyIds` as MCP tools that still never hold a key.
+| Live WalletPlugin co-sign | Stub refuses until a reviewed engine is wired |
+| Default mainnet gate | Operator decision |
+| `sign_digest` tool | Blind hashing is a CVE class |
 
 Run `npm test`.
