@@ -6,19 +6,22 @@ describe("agent proposal across networks", () => {
   it("allows a small transfer on the two lab testnets", () => {
     const policy = createPolicy();
     const now = 1_700_000_000;
-    for (const chainId of [CHAINS.waxTestnet, CHAINS.jungle4]) {
+    for (const [chainId, symbol] of [
+      [CHAINS.waxTestnet, "WAX"],
+      [CHAINS.jungle4, "A"],
+    ] as const) {
       const decision = policy.propose({
         chainId,
         contract: "eosio.token",
         action: "transfer",
         alias: "wax-faucet",
         amountUnits: 10000n,
-        symbol: "WAX",
+        symbol,
         memo: "agent tip",
         nowSec: now,
         expiresAtSec: now + 60,
       });
-      expect(decision.ok).toBe(true);
+      expect(decision.ok, symbol).toBe(true);
     }
   });
 
@@ -56,5 +59,34 @@ describe("agent proposal across networks", () => {
       expiresAtSec: now + 60,
     });
     expect(decision.ok).toBe(false);
+  });
+
+  it("refuses the wrong system token on a lab chain", () => {
+    const policy = createPolicy();
+    const now = 1_700_000_000;
+    const waxWithA = policy.propose({
+      chainId: CHAINS.waxTestnet,
+      contract: "eosio.token",
+      action: "transfer",
+      alias: "wax-faucet",
+      amountUnits: 10000n,
+      symbol: "A",
+      memo: "agent tip",
+      nowSec: now,
+      expiresAtSec: now + 60,
+    });
+    const jungleWithWax = policy.propose({
+      chainId: CHAINS.jungle4,
+      contract: "eosio.token",
+      action: "transfer",
+      alias: "wax-faucet",
+      amountUnits: 10000n,
+      symbol: "WAX",
+      memo: "agent tip",
+      nowSec: now,
+      expiresAtSec: now + 60,
+    });
+    expect(waxWithA.ok).toBe(false);
+    expect(jungleWithWax.ok).toBe(false);
   });
 });

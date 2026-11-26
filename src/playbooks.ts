@@ -51,7 +51,7 @@ export const PLAYBOOKS: readonly NetworkPlaybook[] = [
     chainId: CHAINS.jungle4,
     symbol: "A",
     kind: "lab",
-    actions: [transfer("Same proposal shape as WAX Testnet. The published digest vector is from this chain.", true)],
+    actions: [transfer("Same proposal shape as WAX Testnet, paid in A. The published digest vector is from this chain.", true)],
   },
   {
     name: "WAX",
@@ -89,6 +89,34 @@ export const PLAYBOOKS: readonly NetworkPlaybook[] = [
     symbol: "TLOS",
     kind: "mainnet",
     actions: [transfer("Move TLOS after the gate allows this chain id.", false)],
+  },
+  {
+    name: "Telos Testnet",
+    chainId: CHAINS.telosTestnet,
+    symbol: "TLOS",
+    kind: "other-testnet",
+    actions: [transfer("Practice a TLOS transfer once this chain id is added to the gate.", false)],
+  },
+  {
+    name: "XPR Network",
+    chainId: CHAINS.xpr,
+    symbol: "XPR",
+    kind: "mainnet",
+    actions: [transfer("Move XPR after the gate allows this chain id. Same id as Proton.", false)],
+  },
+  {
+    name: "XPR Testnet",
+    chainId: CHAINS.xprTestnet,
+    symbol: "XPR",
+    kind: "other-testnet",
+    actions: [transfer("Practice an XPR transfer once this chain id is added to the gate.", false)],
+  },
+  {
+    name: "UX",
+    chainId: CHAINS.ux,
+    symbol: "UX",
+    kind: "mainnet",
+    actions: [transfer("Move UX after the gate allows this chain id.", false)],
   },
 ];
 

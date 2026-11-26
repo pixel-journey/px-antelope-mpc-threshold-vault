@@ -32,11 +32,8 @@ describe("proposal handoff", () => {
   it("changes the proposal id when the chain, the amount, or the memo changes", () => {
     const policy = createPolicy();
     const base = handoff(proposal, policy.propose(proposal), "agent.pxj");
-    const otherChain = handoff(
-      { ...proposal, chainId: CHAINS.jungle4 },
-      policy.propose({ ...proposal, chainId: CHAINS.jungle4 }),
-      "agent.pxj",
-    );
+    const jungleProposal = { ...proposal, chainId: CHAINS.jungle4, symbol: "A" };
+    const otherChain = handoff(jungleProposal, policy.propose(jungleProposal), "agent.pxj");
     const otherAmount = handoff(
       { ...proposal, amountUnits: 20000n },
       policy.propose({ ...proposal, amountUnits: 20000n }),
