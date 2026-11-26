@@ -15,6 +15,8 @@ Blueprint requirement: a WharfKit wallet plugin that co-signs with threshold ECD
 
 It does not extend `AbstractWalletPlugin` in-process, does not register with `SessionKit`, and does not open a network socket. The WharfKit tests still construct a `SessionKit` with an **empty** `walletPlugins` array.
 
+Lab HTTP (`labClient.ts`) is a separate operator path for `get_info` and gated `push_transaction`. It is not this plugin.
+
 ## What a real plugin must still do
 
 1. Extend WharfKit 4.x `AbstractWalletPlugin` (clone-aware for session restore).
@@ -23,9 +25,10 @@ It does not extend `AbstractWalletPlugin` in-process, does not register with `Se
 4. Apply K1 offline r-filter / R1 preference ([src/presign.ts](../src/presign.ts), [src/curve.ts](../src/curve.ts)).
 5. Return `{ signatures: [Signature.from(sigString)] }` only after a reviewed engine produces a recoverable `SIG_K1_` or `SIG_R1_`.
 6. Keep `owner` as cold multisig so one `updateauth` can revoke the active MPC key.
+7. Do not call `push_transaction` inside the plugin. Push stays an operator step after readiness ([PUSH.md](PUSH.md)).
 
 ## Why the stub refuses
 
 CVE-class failures (blind digest signing, presignature reuse, missing r-filter) are worse when wrapped in a familiar wallet plugin API. The stub teaches the **refuse** paths first.
 
-See [ARCHITECTURE.md](../ARCHITECTURE.md) and [THREAT_MODEL.md](THREAT_MODEL.md).
+See [ARCHITECTURE.md](../ARCHITECTURE.md), [ENGINE.md](ENGINE.md), and [THREAT_MODEL.md](THREAT_MODEL.md).
