@@ -13,6 +13,12 @@
 
 ---
 
+## Agentic payments
+
+An agent that can pay on Antelope proposes a transfer, has that proposal checked by something that is not the model, and then produces a signature the network will accept. The signature is one 65-byte value. The network does not see how many parties helped produce it. That is why a threshold scheme is useful: the agent can hold one share, a policy service can hold another, and a human can hold the third.
+
+See [docs/AGENTIC-PAYMENTS.md](docs/AGENTIC-PAYMENTS.md) for the loop, [docs/NETWORKS.md](docs/NETWORKS.md) for the chain ids, and [docs/WITHOUT-WHARFKIT.md](docs/WITHOUT-WHARFKIT.md) if the agent cannot load the WharfKit packages.
+
 ## Beginner — the account is the name
 
 An Ethereum externally owned account is a hash of one public key. Lose that key, or share it, and the address moves with it. An Antelope account is a 12-character name. `owner`, `active`, and any custom permission are rows you can replace with `eosio::updateauth`. The NFTs and the token balance stay on the name.

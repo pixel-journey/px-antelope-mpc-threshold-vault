@@ -1,6 +1,6 @@
 # Antelope MPC, without a mainnet signer
 
-> **Status:** educational reference. Unaudited. Testnet discussion only.  
+> **Status:** educational reference for agentic payments on Antelope. Unaudited. The policy gate defaults to testnets; the network map includes the mainnets.  
 > **What `npm test` does:** locks the K1 canonical byte rule, one published public-key checksum, one Jungle 4 signing digest, WharfKit 4.0.2 recovering the same keys, a policy gate, and two museum calculations.  
 > **What it does not do:** threshold signing, WebAssembly, a custom wallet plugin, a relay, a key share, or a broadcast.
 
@@ -17,6 +17,9 @@ This repository is the reading course and the byte-level lab for that idea. It i
 | [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) | What the tests refuse, and what they cannot prove |
 | [docs/LICENSES.md](docs/LICENSES.md) | Why this course stays MIT, and why WharfKit (BSD-3-Clause) is the client we depend on |
 
+| [docs/NETWORKS.md](docs/NETWORKS.md) | Chain ids, token symbols, and endpoints for WAX, Vaulta, Telos, XPR Network, and UX |
+| [docs/AGENTIC-PAYMENTS.md](docs/AGENTIC-PAYMENTS.md) | How an agent proposes a transfer, how the policy gate checks it, and why the account name matters |
+| [docs/WITHOUT-WHARFKIT.md](docs/WITHOUT-WHARFKIT.md) | What you still have to get right if the agent cannot use the WharfKit packages |
 | [docs/SOURCES.md](docs/SOURCES.md) | Primary sources, and what was rechecked here |
 
 ```bash
