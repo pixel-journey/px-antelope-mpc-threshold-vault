@@ -1,15 +1,8 @@
 /**
- * Educational threshold-signature flow.
+ * Educational threshold-signature flow and engine registry.
  *
- * This file shows the shape of a 2-of-3 threshold ECDSA ceremony:
- * key generation, offline presign, and online sign.
- *
- * It does not implement DKLs23, CGGMP24, or any other real protocol.
- * It does not produce a signature that a node will accept.
- * It does not assemble a private key at any step.
- *
- * A later lab can replace the mock engine with a reviewed WASM build
- * of an MIT/Apache engine. The interface stays the same.
+ * Phase R.2 will plug real MIT/Apache WASM engines behind `ThresholdEngine`.
+ * Until then only `educational-mock` is constructible. `sign` always throws.
  */
 
 export type Curve = "K1" | "R1";
@@ -31,13 +24,39 @@ export interface Presignature {
 
 export interface ThresholdEngine {
   readonly name: string;
+  readonly productionReady: false;
   dkg(curve: Curve): Promise<[Share, Share, Share]>;
   presign(shares: [Share, Share], curve: Curve): Promise<Presignature>;
   sign(presign: Presignature, digest: Uint8Array): Promise<never>;
 }
 
+/** Engines named for R.2 — not importable in this package. */
+export const ENGINE_ROADMAP = [
+  {
+    id: "educational-mock",
+    status: "available" as const,
+    license: "MIT",
+    notes: "Tokens only; sign() throws",
+  },
+  {
+    id: "dkls23",
+    status: "planned-r2" as const,
+    license: "MIT/Apache-2.0 (0xCarbon lineage)",
+    notes: "Unaudited for mainnet; testnet banner required",
+  },
+  {
+    id: "cggmp24",
+    status: "planned-r2" as const,
+    license: "MIT/Apache-2.0 (Lockness ≥ 0.7.0-alpha.2)",
+    notes: "Prefer over cggmp21; deny.toml blocks cggmp21",
+  },
+] as const;
+
+export type EngineId = (typeof ENGINE_ROADMAP)[number]["id"];
+
 class EducationalEngine implements ThresholdEngine {
   readonly name = "educational-mock";
+  readonly productionReady = false as const;
 
   async dkg(curve: Curve): Promise<[Share, Share, Share]> {
     const token = (party: 1 | 2 | 3) =>
@@ -66,11 +85,23 @@ class EducationalEngine implements ThresholdEngine {
 
   async sign(_presign: Presignature, _digest: Uint8Array): Promise<never> {
     throw new Error(
-      "educational engine does not sign. Replace it with a reviewed WASM build before any testnet broadcast.",
+      "educational engine does not sign. Phase R.2: replace with reviewed WASM under testnet policy before any push.",
     );
   }
 }
 
 export function createEducationalEngine(): ThresholdEngine {
   return new EducationalEngine();
+}
+
+/** Only the mock is available until R.2 crates land. */
+export function createEngine(id: EngineId = "educational-mock"): ThresholdEngine {
+  if (id === "educational-mock") return createEducationalEngine();
+  throw new Error(
+    `engine "${id}" is Phase R.2 — not in this package. See ENGINE_ROADMAP and docs/RUST.md.`,
+  );
+}
+
+export function listEngines() {
+  return ENGINE_ROADMAP.map((e) => ({ ...e }));
 }
