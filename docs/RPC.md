@@ -1,36 +1,34 @@
-# Lab RPC catalog
+# Lab RPC helpers
 
-[src/rpc.ts](../src/rpc.ts) lists public lab endpoints and builds request shapes. It does not fetch by default.
+Modules: [src/rpc.ts](../src/rpc.ts) · [src/labClient.ts](../src/labClient.ts).
 
-## Endpoints
+## Endpoints catalog
 
-| Network | Kind | Example API root |
+| Name | Kind | Default lab gate |
 | --- | --- | --- |
-| WAX Testnet | default lab | `https://waxtestnet.greymass.com` |
-| Jungle 4 | default lab | `https://jungle4.greymass.com` |
-| Telos Testnet | operator opt-in | `https://telostestnet.greymass.com` |
-| XPR Testnet | operator opt-in | `https://proton-testnet.greymass.com` |
+| WAX Testnet (Greymass) | lab | Yes |
+| Jungle 4 | lab | Yes |
+| Telos Testnet | testnet-opt-in | Via `extraLabChainIds` |
+| XPR Testnet | testnet-opt-in | Via `extraLabChainIds` |
 
-## Paths
+Mainnets are **not** in this catalog as send targets.
 
-**Early / middle curriculum**
+## Paths taught
 
-- `/v1/chain/get_info`
-- `/v1/chain/get_required_keys`
-- `/v1/chain/compute_transaction`
-- `/v1/chain/send_read_only_transaction`
+| Path | Use |
+| --- | --- |
+| `/v1/chain/get_info` | `fetchLabChainInfo` (opt-in network) |
+| `/v1/chain/compute_transaction` | Request builder; offline fixtures in `simulate.ts` |
+| `/v1/chain/push_transaction` | `pushLabTransaction` only after readiness |
+| `/v1/chain/get_required_keys` | Documented for later WalletPlugin work |
 
-**Final curriculum stage** (see [PUSH.md](PUSH.md))
+## Builders vs fetch
 
-- `/v1/chain/push_transaction`
-- `/v1/chain/send_transaction2`
+- `buildComputeTransactionRequest` / `buildPushTransactionRequest` — URL + body; **no** socket
+- `fetchLabChainInfo` / `pushLabTransaction` — require `{ enableNetwork: true }`
 
-`buildPushTransactionRequest` returns a URL only when `evaluatePushReadiness` is fully green **and** still sets `httpSendImplemented: false` in this package. That is “learn the endpoint,” not “we shipped a silent sender.”
+Push additionally requires green `evaluatePushReadiness` (policy, real digest, dry-run, operator opt-in). Incomplete → no HTTP.
 
-## Local vs node
+## Agent guidance
 
-| Module | Node contact | Role |
-| --- | --- | --- |
-| `simulate.ts` | No | Policy + broadcast candidate checks |
-| `rpc.ts` | Builders only | Correct URLs/bodies for lab clients |
-| Phase W (future) | Optional `fetch` | Real dry-run / testnet push under readiness |
+Do not expose raw push as an MCP tool. Prefer offline fixtures first, then operator-controlled scripts for any live lab send. See [PUSH.md](PUSH.md) · [MCP-TOOLS.md](MCP-TOOLS.md).
