@@ -9,14 +9,14 @@ Rechecked while this course was written, 26 November 2026:
 | Vector 1 `PUB_K1_` and `EOS` strings | Rebuilt locally with RIPEMD-160 and Base58. |
 | DKLs23 v0.6.2 exists as a GitHub release with the three curve crates named | [0xCarbon/DKLs23 releases](https://github.com/0xCarbon/DKLs23/releases) |
 | CVE-2025-66016 text: missing ZK check before 0.6.3, mitigation names cggmp24 0.7.0-alpha.2 | [CVE record](https://www.cve.org/CVERecord?id=CVE-2025-66016) and [GHSA-m95p-425x-x889](https://github.com/LFDT-Lockness/cggmp21/security/advisories/GHSA-m95p-425x-x889) |
-| `@wharfkit/antelope` current tag | `npm view` reported 4.0.2, with 4.0.1 still present. Not imported. |
+| `@wharfkit/session` and `@wharfkit/antelope` 4.0.2 | Imported. `Chains` ids for WAX, WAX Testnet, Jungle 4, Vaulta, Telos, Telos Testnet, Proton, and Proton Testnet were read from that package. `signingDigest` and `recoverDigest` match Vectors 1–4 from the blueprint. `Authority.sort()` orders two K1 keys. License field on both packages is BSD-3-Clause. |
 | secp256k1 nonce-reuse algebra | Recomputed with `@noble/curves` 1.9.7 on a fixture scalar. |
 
 Not rechecked in this session, so do not treat this file as a verification of them:
 
 - crates.io's default displayed version of `cggmp24` (the site returned 403 here). Pin from the advisory, not from memory: at least 0.7.0-alpha.2, and read upstream `CGGMP21_MIGRATION.md` before you pick a newer alpha.
 - WharfKit's September 2026 monorepo announcement, beyond the version number on npm.
-- Telos testnet and XPR chain ids. They were garbled in an OCR pass of the blueprint, so they are omitted rather than guessed.
+- Telos testnet and XPR chain ids. They were garbled in an OCR pass of the blueprint. They are now taken from `@wharfkit/session` 4.0.2 `Chains.TelosTestnet`, `Chains.Proton`, and `Chains.ProtonTestnet` (XPR is the same object as Proton). They are still not selected by the policy gate.
 - Dollar amounts in third-party incident writeups.
 - Any claim that a given Rust crate is constant-time, audited, or free of CVE-2025-66017 in a specific alpha. Read the crate's advisory list yourself.
 

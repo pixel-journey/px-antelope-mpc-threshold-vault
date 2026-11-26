@@ -7,7 +7,7 @@ Each level says what the idea is, and whether this repository runs it.
 | 1 | Shamir reconstruction puts the secret on one machine. Real threshold ECDSA multiplies shares and does not open `x`. | Yes, as a toy over the prime 101. Not a DKG. |
 | 2 | `PUB_K1_` and legacy `EOS` checksums differ by the ASCII suffix. | Yes, Vector 1 only. No key generation. |
 | 3 | The K1 canonical gauntlet, low-S, and the recovery-id flip. | Yes. The fractions are exact byte counts, not a live signer. |
-| 4 | Cold owner, hot active, `linkauth` for a bot. | Reading only. No account is created. No transaction is broadcast. |
+| 4 | Cold owner, hot active, `linkauth` for a bot. | `Authority.sort()` is tested with WharfKit 4.0.2. No account is created. No transaction is broadcast. |
 | 5 | A passkey can wrap a local share. An OAuth wallet provider is a different trust decision. | Reading only. No WebAuthn call. |
 | 6 | Nonce reuse recovers `x`. Unlength-prefixed hashes collide. | Yes, on fixtures created inside the test. |
 | 7 | A model proposes a transfer. The policy gate refuses mainnet, `updateauth`, and a memo that smuggles an account. | Yes, in memory. No MCP process. |
@@ -29,7 +29,9 @@ Read the table in [EDUCATION.md](../EDUCATION.md). After you can compute 32640 b
 
 ## Level 4 — permissions, still native
 
-No custom contract. `owner` is a weighted cold authority. `active` is the single MPC public key, if you ever have one. `linkauth` caps a custom permission to one action. Sorting of authority keys is a nodeos requirement (`Authority.sort()` in WharfKit). This repo does not call it, because it does not build an authority.
+No custom contract. `owner` is a weighted cold authority. `active` is the single MPC public key, if you ever have one. `linkauth` caps a custom permission to one action. WharfKit 4.0.2's `Authority.sort()` is what puts keys, accounts, and waits into the order nodeos checks. The test builds an unsorted two-key authority and checks the order after `sort()`. It does not pack an `updateauth` transaction and it does not send one.
+
+The client is `SessionKit` from `@wharfkit/session`, with `@wharfkit/antelope` at the same version. eosjs and UAL are older stacks. [docs/LICENSES.md](LICENSES.md) is why the course can depend on WharfKit and still not vendor an AGPL engine.
 
 The on-chain multisig lab is [wax-multi-sig-proposal-builder-and-simulator](https://github.com/pixel-journey/wax-multi-sig-proposal-builder-and-simulator).
 

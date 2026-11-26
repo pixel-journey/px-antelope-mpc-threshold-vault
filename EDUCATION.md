@@ -90,7 +90,9 @@ sig_digest = SHA-256(chain_id || packed_transaction || cfd_hash)
 
 `cfd_hash` is 32 zero bytes when there is no context-free data. The Jungle 4 packed transaction in [src/digest.ts](src/digest.ts) hashes to the published tx id `6eac401c…a655ba` and, with the Jungle 4 chain id, to sig_digest `c0a70da4…ee8a3`. The same bytes under the WAX Testnet chain id do not. A co-signer that accepts a naked digest from a model has already lost the ability to read the actions. CVE-2025-66017's class of bug is the same shape: a presignature promised for one message getting used on another.
 
-WharfKit's 4.0.1 release notes are what a plugin chapter would target. On 26 November 2026, `npm view @wharfkit/antelope version` reported **4.0.2** as current, and 4.0.1 was still installable. This course imports neither. Do not add the archived Wombat plugin.
+WharfKit is the client to use. The tests import `@wharfkit/session` **4.0.2** (BSD-3-Clause), which re-exports `@wharfkit/antelope` at the same version. `Transaction.signingDigest(Chains.Jungle4.id)` equals the digest this course hashes by hand. `Signature.recoverDigest` returns `PUB_K1_6RrvujLQN1x5Tacbep1KAk8zzKpSThAQXBCKYFfGUYeACcSRFs` for the Jungle 4 K1 vector and `PUB_R1_7WVsSeomUhZL8FFHZWTLjBNJPxYuvEjjxuQRAq8hVaq768i8Wa` for the R1 vector. `Authority.sort()` puts the keys in the order nodeos expects before an `updateauth`.
+
+The blueprint said 4.0.1. On 26 November 2026 the current tag was 4.0.2, and that tag still matches the vectors, so the course pins 4.0.2 rather than freezing the older patch. A `SessionKit` is constructed for the two lab chains with an empty wallet-plugin list. It does not log in. eosjs and UAL are the legacy path; they are not a second recommended stack. The license reasons are in [docs/LICENSES.md](docs/LICENSES.md). An MIT course may depend on BSD-3-Clause WharfKit. It may describe an AGPL or non-commercial engine. It may not copy those engines into this tree.
 
 ---
 
@@ -136,4 +138,4 @@ Until those exist, the honest statement is the one in the README: this is a cour
 npm test
 ```
 
-You should see 11 passing tests. If a future edit changes the Jungle 4 vector or the 32640 count, the edit is wrong or the rule being taught has changed. Do not "fix" the count to match a rounded percentage.
+You should see 15 passing tests. If a future edit changes the Jungle 4 vector, the WharfKit recovery, or the 32640 count, the edit is wrong or the rule being taught has changed. Do not "fix" the count to match a rounded percentage.
