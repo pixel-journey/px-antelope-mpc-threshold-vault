@@ -2,7 +2,7 @@
   "name": "px-antelope-mpc-threshold-vault",
   "private": true,
   "type": "module",
-  "description": "Educational Antelope MPC course. Tests lock the K1 canonical byte rule, a Jungle 4 signing digest, WharfKit 4.0.2 recovery, and a policy gate. No threshold signing. No broadcast.",
+  "description": "Educational Antelope MPC course for agentic payments. WharfKit 4.0.2 recovers vectors. Policy gate, strategies, MCP tools, presign queue, lab signer, broadcast lock. No threshold WASM. No broadcast. Unaudited.",
   "scripts": {
     "test": "vitest run"
   },
