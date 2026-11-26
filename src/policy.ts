@@ -4,6 +4,9 @@ import { CHAINS, LAB_CHAIN_IDS } from "./digest.js";
  * A policy gate that sits outside any model.
  * It does not hold a key, does not sign, and does not talk to a node.
  * "Model proposes, policy decides" is the whole job of this file.
+ *
+ * Operators may pass extraLabChainIds for additional *testnets* only.
+ * Mainnet chain ids are always refused, even if listed by mistake.
  */
 
 const BLOCKED_ACTIONS = new Set([
@@ -21,9 +24,33 @@ const ALIASES: Record<string, string> = {
   "test-peer": "testpeer.pxj",
 };
 
-const MAX_UNITS = 100_000n; // 10.0000 WAX
+const MAX_UNITS = 100_000n; // 10.0000 of the chain token (lab units)
 const MAX_MEMO = 64;
 const MAX_TTL_SEC = 120;
+
+/** Chain ids that must never be allowed, even via extraLabChainIds. */
+export const MAINNET_CHAIN_IDS: readonly string[] = [
+  CHAINS.waxMainnet,
+  CHAINS.vaulta,
+  CHAINS.telos,
+  CHAINS.xpr,
+  CHAINS.ux,
+];
+
+const SYMBOL_BY_CHAIN: Record<string, string> = {
+  [CHAINS.waxTestnet]: "WAX",
+  [CHAINS.jungle4]: "A",
+  [CHAINS.telosTestnet]: "TLOS",
+  [CHAINS.xprTestnet]: "XPR",
+};
+
+export interface PolicyOptions {
+  /**
+   * Additional testnet chain ids an operator opts into.
+   * Mainnet ids are stripped even if present.
+   */
+  extraLabChainIds?: readonly string[];
+}
 
 export interface Proposal {
   chainId: string;
@@ -47,15 +74,28 @@ export interface Decision {
 export interface Policy {
   killed: boolean;
   audit: string[];
+  /** Effective lab set after stripping mainnets. */
+  labChainIds: readonly string[];
   kill(reason: string): void;
   propose(input: Proposal): Decision;
 }
 
-export function createPolicy(): Policy {
+function buildLabSet(extra?: readonly string[]): string[] {
+  const set = new Set<string>([...LAB_CHAIN_IDS]);
+  for (const id of extra ?? []) {
+    if (MAINNET_CHAIN_IDS.includes(id)) continue;
+    set.add(id);
+  }
+  return [...set];
+}
+
+export function createPolicy(options: PolicyOptions = {}): Policy {
+  const labChainIds = buildLabSet(options.extraLabChainIds);
   const audit: string[] = [];
   const policy: Policy = {
     killed: false,
     audit,
+    labChainIds,
     kill(reason: string) {
       policy.killed = true;
       audit.push(`kill: ${reason}`);
@@ -66,11 +106,11 @@ export function createPolicy(): Policy {
         return { ok: false, reason, account: null };
       };
       if (policy.killed) return refuse("policy is killed");
-      if (!LAB_CHAIN_IDS.includes(input.chainId as (typeof LAB_CHAIN_IDS)[number])) {
-        return refuse("chain is not a lab testnet");
-      }
-      if (input.chainId === CHAINS.waxMainnet || input.chainId === CHAINS.vaulta) {
+      if (MAINNET_CHAIN_IDS.includes(input.chainId)) {
         return refuse("mainnet is refused");
+      }
+      if (!labChainIds.includes(input.chainId)) {
+        return refuse("chain is not a lab testnet");
       }
       if (BLOCKED_ACTIONS.has(input.action)) {
         return refuse(`action ${input.action} is not a model tool`);
@@ -80,7 +120,9 @@ export function createPolicy(): Policy {
       }
       const account = ALIASES[input.alias];
       if (!account) return refuse("recipient alias is unknown");
-      const expectedSymbol = input.chainId === CHAINS.jungle4 ? "A" : "WAX";
+      const expectedSymbol =
+        SYMBOL_BY_CHAIN[input.chainId] ??
+        (input.chainId === CHAINS.jungle4 ? "A" : "WAX");
       if (input.symbol !== expectedSymbol) {
         return refuse(`symbol must be ${expectedSymbol} on this chain`);
       }
