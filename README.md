@@ -18,6 +18,7 @@ This repository is the reading course and the byte-level lab for that idea. It i
 | [docs/LICENSES.md](docs/LICENSES.md) | Why this course stays MIT, and why WharfKit (BSD-3-Clause) is the client we depend on |
 | [docs/NETWORKS.md](docs/NETWORKS.md) | Chain ids, token symbols, and endpoints for WAX, Vaulta, Telos, XPR Network, and UX |
 | [docs/AGENTIC-PAYMENTS.md](docs/AGENTIC-PAYMENTS.md) | How an agent proposes a transfer, how the policy gate checks it, and why the account name matters |
+| [docs/AGENT-RECIPE.md](docs/AGENT-RECIPE.md) | The four steps an agent can run today: pick a lab network, propose, stop |
 | [docs/WITHOUT-WHARFKIT.md](docs/WITHOUT-WHARFKIT.md) | What you still have to get right if the agent cannot use the WharfKit packages |
 | [docs/AGENT-STRATEGIES.md](docs/AGENT-STRATEGIES.md) | Three share roles, four tools an agent may call, and per-chain opportunities |
 | [docs/PROTOCOL-GENERATIONS.md](docs/PROTOCOL-GENERATIONS.md) | GG18/GG20, CGGMP24, DKLs23, and the 2025–2026 class-group protocols |
