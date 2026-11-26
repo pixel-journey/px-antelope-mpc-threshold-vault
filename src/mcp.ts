@@ -1,8 +1,8 @@
 /**
  * Model Context Protocol–shaped tools for agents.
  *
- * None of these hold a share. None return a threshold signature.
- * None broadcast. `lab_sign_allowed` is lab-only and must not accept a raw digest.
+ * None hold a threshold share. None HTTP-push by default.
+ * Lab signatures are throwaway and not node-valid packed-tx signatures.
  */
 
 import { evaluateBroadcast } from "./broadcast.js";
@@ -16,7 +16,11 @@ import {
   type PolicyOptions,
   type Proposal,
 } from "./policy.js";
-import { simulateAllowed, type SimulateResult } from "./simulate.js";
+import {
+  simulateAllowed,
+  type SimulateFixtureId,
+  type SimulateResult,
+} from "./simulate.js";
 import {
   listStrategyIds,
   runStrategy,
@@ -61,12 +65,12 @@ export const MCP_TOOL_SPECS: readonly McpToolSpec[] = [
   },
   {
     name: "propose_transfer",
-    description: "Submit a transfer proposal to the session policy gate. Does not sign or broadcast.",
+    description: "Submit a transfer proposal to the session policy gate. Does not sign or push.",
     canProduceLabSignature: false,
   },
   {
     name: "run_strategy",
-    description: "Run a named strategy; lab-signs only after allow. Does not broadcast.",
+    description: "Run a named strategy; lab-signs only after allow.",
     canProduceLabSignature: true,
   },
   {
@@ -76,18 +80,19 @@ export const MCP_TOOL_SPECS: readonly McpToolSpec[] = [
   },
   {
     name: "lab_sign_allowed",
-    description: "Lab only: throwaway SIG_K1_ after allow. Not a threshold share. Not production MCP.",
+    description: "Lab only: throwaway SIG_K1_ after allow. Not a threshold share.",
     canProduceLabSignature: true,
   },
   {
     name: "simulate_proposal",
     description:
-      "Local dry-run: policy decision + broadcast lock. Does not call nodeos compute_transaction.",
+      "Offline compute_transaction fixtures (clean / inline-escalation / revert). Not a live node.",
     canProduceLabSignature: false,
   },
   {
     name: "broadcast_status",
-    description: "Whether a chain id is a broadcast candidate and why this course still refuses send.",
+    description:
+      "Testnet candidate check. Push is end-stage via evaluatePushReadiness — not a default agent action.",
     canProduceLabSignature: false,
   },
 ];
@@ -162,7 +167,7 @@ export function checkStatus() {
     defaultLabChainIds: [...LAB_CHAIN_IDS],
     defaultGateActionCount: defaultGateActions().length,
     sessionOptions,
-    broadcasts: false as const,
+    httpPushImplemented: false as const,
   };
 }
 
@@ -185,17 +190,21 @@ export function labHandoff(proposal: Proposal, decision: Decision, fromAccount: 
   return handoff(proposal, decision, fromAccount);
 }
 
-export function simulateProposal(proposal: Proposal, decision: Decision): SimulateResult {
-  return simulateAllowed(proposal, decision);
+export function simulateProposal(
+  proposal: Proposal,
+  decision: Decision,
+  fixture?: SimulateFixtureId,
+): SimulateResult {
+  return simulateAllowed(proposal, decision, fixture ? { fixture } : undefined);
 }
 
 export function broadcastStatus(chainId: string) {
   const decision = evaluateBroadcast(chainId);
   return {
     ...decision,
-    courseBroadcasts: false as const,
+    httpPushImplemented: false as const,
     note: decision.ok
-      ? "Candidate testnet only; refuseBroadcast still throws — no push_transaction in this course."
+      ? "Testnet candidate. Push is curriculum end-stage — see docs/PUSH.md and evaluatePushReadiness."
       : decision.reason,
   };
 }
