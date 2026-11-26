@@ -29,6 +29,7 @@ import {
   strategiesByTag,
   type StrategyResult,
 } from "./strategies.js";
+import { listEngines } from "./threshold.js";
 
 export type McpToolName =
   | "list_networks"
@@ -39,7 +40,8 @@ export type McpToolName =
   | "check_status"
   | "lab_sign_allowed"
   | "simulate_proposal"
-  | "broadcast_status";
+  | "broadcast_status"
+  | "list_engines";
 
 export interface McpToolSpec {
   name: McpToolName;
@@ -92,7 +94,12 @@ export const MCP_TOOL_SPECS: readonly McpToolSpec[] = [
   {
     name: "broadcast_status",
     description:
-      "Testnet candidate check. Push is end-stage via evaluatePushReadiness — not a default agent action.",
+      "Testnet candidate check. Push is end-stage via evaluatePushReadiness.",
+    canProduceLabSignature: false,
+  },
+  {
+    name: "list_engines",
+    description: "Threshold engine roadmap. Only educational-mock is constructible; sign always throws.",
     canProduceLabSignature: false,
   },
 ];
@@ -168,6 +175,7 @@ export function checkStatus() {
     defaultGateActionCount: defaultGateActions().length,
     sessionOptions,
     httpPushImplemented: false as const,
+    engines: listEngines(),
   };
 }
 
@@ -204,9 +212,13 @@ export function broadcastStatus(chainId: string) {
     ...decision,
     httpPushImplemented: false as const,
     note: decision.ok
-      ? "Testnet candidate. Push is curriculum end-stage — see docs/PUSH.md and evaluatePushReadiness."
+      ? "Testnet candidate. Push is curriculum end-stage — see docs/PUSH.md."
       : decision.reason,
   };
+}
+
+export function listEnginesTool() {
+  return listEngines();
 }
 
 export const LAB_CHAIN_ID_MAP = {
