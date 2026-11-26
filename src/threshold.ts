@@ -54,6 +54,43 @@ export const ENGINE_ROADMAP = [
 
 export type EngineId = (typeof ENGINE_ROADMAP)[number]["id"];
 
+/** Conditions that must all be true before a real `sign` is allowed to exist. */
+export const R2_ADMISSION = [
+  {
+    id: "license",
+    met: false,
+    detail: "MIT or Apache-2.0 only; deny.toml still blocks rug, GMP, and cggmp21",
+  },
+  {
+    id: "no-sign-digest",
+    met: false,
+    detail: "Engine must hash chain_id || packed || cfd itself; 32-byte caller digests are refused",
+  },
+  {
+    id: "k1-filter",
+    met: false,
+    detail: "K1 presignatures filtered offline; bad s burns the slot",
+  },
+  {
+    id: "testnet-banner",
+    met: false,
+    detail: "Mainnet chain ids stay refused even after an engine lands",
+  },
+  {
+    id: "audit",
+    met: false,
+    detail: "Independent review before any mainnet value; this package is unaudited",
+  },
+] as const;
+
+export function r2Admission() {
+  return {
+    ready: false as const,
+    blockers: R2_ADMISSION.filter((row) => !row.met).map((row) => row.id),
+    rows: R2_ADMISSION.map((row) => ({ ...row })),
+  };
+}
+
 class EducationalEngine implements ThresholdEngine {
   readonly name = "educational-mock";
   readonly productionReady = false as const;
@@ -83,7 +120,10 @@ class EducationalEngine implements ThresholdEngine {
     };
   }
 
-  async sign(_presign: Presignature, _digest: Uint8Array): Promise<never> {
+  async sign(_presign: Presignature, digest: Uint8Array): Promise<never> {
+    if (digest.length !== 32) {
+      throw new Error("digest must be 32 bytes (SHA-256 sig_digest), not a raw string");
+    }
     throw new Error(
       "educational engine does not sign. Phase R.2: replace with reviewed WASM under testnet policy before any push.",
     );
@@ -97,8 +137,9 @@ export function createEducationalEngine(): ThresholdEngine {
 /** Only the mock is available until R.2 crates land. */
 export function createEngine(id: EngineId = "educational-mock"): ThresholdEngine {
   if (id === "educational-mock") return createEducationalEngine();
+  const gate = r2Admission();
   throw new Error(
-    `engine "${id}" is Phase R.2 — not in this package. See ENGINE_ROADMAP and docs/RUST.md.`,
+    `engine "${id}" is Phase R.2 — not in this package (blockers: ${gate.blockers.join(", ")}).`,
   );
 }
 
