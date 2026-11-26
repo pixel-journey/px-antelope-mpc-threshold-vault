@@ -8,21 +8,16 @@ No broadcast. No threshold share. Lab `SIG_K1_` is over a proposal id only.
 import {
   listStrategiesTool,
   runStrategyTool,
-  simulateProposal,
   broadcastStatus,
   checkStatus,
 } from "./mcp.js";
+import { listLabRpcSummary, buildPushTransactionRequest } from "./rpc.js";
 import { CHAINS } from "./digest.js";
 
 listStrategiesTool({ expect: "allow" });
-const tip = runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
-// simulate with the same proposal/decision fields the strategy used internally as needed
-broadcastStatus(CHAINS.waxMainnet); // ok: false
-checkStatus(); // broadcasts: false
-
-runStrategyTool("telos-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000), {
-  extraLabChainIds: [CHAINS.telosTestnet],
-});
+runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
+broadcastStatus(CHAINS.waxMainnet); // locked
+listLabRpcSummary(); // compute_transaction shapes; push always throws
 ```
 
 | Surface | Module |
@@ -33,6 +28,7 @@ runStrategyTool("telos-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000),
 | Lab sign | `labsign.ts` |
 | Local simulate | `simulate.ts` |
 | Broadcast lock | `broadcast.ts` |
+| Lab RPC catalog | `rpc.ts` |
 | PUB_/SIG_ codec | `codec.ts` |
 | Presign queue | `presign.ts` |
 | Permissions shapes | `permissions.ts` |
@@ -41,14 +37,10 @@ runStrategyTool("telos-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000),
 
 ## Skills
 
-- `skills/antelope-agent-propose`
-- `skills/antelope-agentic-payments`
-- `skills/antelope-mpc-sig-format`
-- `skills/mpc-security-audit`
-- `skills/antelope-network-scope`
+`antelope-agent-propose` · `antelope-agentic-payments` · `antelope-mpc-sig-format` · `mpc-security-audit` · `antelope-network-scope`
 
-## Docs map
+## Docs
 
-[GAP-AUDIT.md](GAP-AUDIT.md) · [AGENT-RECIPE.md](AGENT-RECIPE.md) · [AGENTIC-PAYMENTS.md](AGENTIC-PAYMENTS.md) · [MCP-TOOLS.md](MCP-TOOLS.md)
+[GAP-AUDIT.md](GAP-AUDIT.md) · [AGENT-RECIPE.md](AGENT-RECIPE.md) · [RPC.md](RPC.md) · [AGENTIC-PAYMENTS.md](AGENTIC-PAYMENTS.md)
 
 Run `npm test`.
