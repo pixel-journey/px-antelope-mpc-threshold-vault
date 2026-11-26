@@ -10,30 +10,37 @@ Rebuilding \(x\) is the custody failure. The museum in `src/museum.ts` does it o
 
 ## First generation — Paillier, and the attacks that followed
 
-GG18 (9 signing rounds), GG20 (6 total rounds, 1 online), and Lindell17 (2-of-2) established trustless threshold ECDSA using Paillier homomorphic encryption for the multiplications. In 2023, Alpha-Rays, BitForge, and TSSHOCK showed that unhardened implementations across more than 15 wallet providers leaked full private keys. The missing pieces were Paillier biprimality checks, no-small-factor proofs, and MtA range proofs.
+GG18 (9 signing rounds), GG20 (6 total rounds, 1 online), and Lindell17 (2-of-2) established trustless threshold ECDSA using Paillier homomorphic encryption for the multiplications. In 2023, Alpha-Rays, BitForge, and TSSHOCK showed that unhardened implementations leaked full private keys. The missing pieces were Paillier biprimality checks, no-small-factor proofs, and MtA range proofs.
 
-Modern repositories keep GG18 and GG20 as historical lessons. They are not active signing engines.
+Modern repositories keep GG18 and GG20 as historical lessons. They are not active signing engines. Cards: [ATTACK-MUSEUM.md](ATTACK-MUSEUM.md).
 
 ## Second generation — CGGMP21 / CGGMP24
 
-Canetti, Gennaro, Goldfeder, Makriyannis, and Peled (ePrint 2021/060, revised October 2024) hardened the Paillier line with a full zero-knowledge suite: \(\Pi_{\mathrm{mod}}\), \(\Pi_{\mathrm{fac}}\), \(\Pi_{\mathrm{enc}}\), \(\Pi_{\mathrm{aff-g}}\). The design is UC-secure against a dishonest majority, with 3 offline preprocessing rounds plus 1 non-interactive online round, proactive refresh, and identifiable abort in the specification.
+Canetti, Gennaro, Goldfeder, Makriyannis, and Peled (ePrint 2021/060, revised October 2024) hardened the Paillier line with a full zero-knowledge suite. The design is UC-secure against a dishonest majority, with offline preprocessing plus 1 non-interactive online round, proactive refresh, and identifiable abort in the specification.
 
-Even this lineage had November 2025 disclosures (CVE-2025-66016 and CVE-2025-66017). A paper omission in a ZK check can still enable key recovery, and presignatures degrade if they are reused with raw-digest signing or BIP-32 additive derivation. The LFDT-Lockness `cggmp24` crate at or after 0.7.0-alpha.2 patches those two CVEs. It must be built with the `num-bigint` backend. The `backend-rug` feature pulls LGPL GMP and is not used here.
+November 2025 disclosures (CVE-2025-66016 and CVE-2025-66017) still matter: a missing Jacobi check, and presignature misuse with raw digests or weak HD derivation. Pin `cggmp24` at or after 0.7.0-alpha.2 when an engine lands. Build with the `num-bigint` backend. `backend-rug` pulls LGPL GMP and is banned in `deny.toml`, along with the crate name `cggmp21`.
 
 ## Third generation — DKLs23 and Cait-Sith
 
-DKLs23 (Doerner, Kondi, Lee, and Shelat; IEEE S&P 2024, ePrint 2023/765) removes Paillier and RSA assumptions. It is UC-secure against a dishonest majority in 3 interactive rounds (or 2 amortized when pipelined) via 2-round vectorized multiplication over oblivious-transfer extensions. Vendor reports show large latency gains versus earlier DKLs variants and versus GG20, and clean WebAssembly execution without multi-minute Paillier setup.
+DKLs23 (Doerner, Kondi, Lee, and Shelat; IEEE S&P 2024, ePrint 2023/765) removes Paillier and RSA assumptions. It is UC-secure against a dishonest majority via oblivious-transfer extensions, and it has a clean WASM story without multi-minute Paillier setup.
 
-Cait-Sith separates multiplication into key-independent committed Beaver triples \([a]\), \([b]\), \([c = ab]\). It is used in NEAR's Chain Signatures network. Periodic proactive refresh had not been enabled in that deployment because refreshing invalidates cached presignatures.
+Cait-Sith separates multiplication into key-independent committed Beaver triples. It is used in NEAR's Chain Signatures network. Periodic proactive refresh invalidates cached presignatures — the same rule this course models with `PresignQueue.invalidateAll`.
 
-0xCarbon's `dkls23-*` crates at 0.6.2 are dual-licensed MIT/Apache-2.0 and support both K1 and R1. They are not compiled in this course.
+0xCarbon's `dkls23-*` crates (MIT/Apache-2.0, K1 and R1) are **named** in `ENGINE_ROADMAP`. They are not compiled in this course.
 
 ## Fourth generation — 2025–2026 class-group protocols
 
-Trout (ACM CCS 2025, ePrint 2025/1666) gives 2-round threshold ECDSA from class groups, with a constant-time Rust implementation benchmarked up to 100 parties. Lyu, Li, Zhou, and Deng (ePrint 2025/1696, submitted as Twig to NIST IR 8214C) achieve 2-round threshold-optimal ECDSA via non-interactive multiplication over class groups, with a minimal 2-generator transparent setup and transcript-derived nonce re-randomization.
-
-These are research. Antelope account authorities do not yet accept a signature format that would let a chain verify a class-group threshold scheme natively. An account that later wants to move would do so with `eosio::updateauth`, without transferring balances.
+Trout and related 2-round class-group ECDSA designs are research. Antelope account authorities do not yet accept a signature format that would let a chain verify them natively. An account that later wants to move would do so with `eosio::updateauth`, without transferring balances. See [POST-QUANTUM.md](POST-QUANTUM.md).
 
 ## What this course runs
 
-None of the engines. The tests lock the K1 canonical byte rule, one published public-key checksum, one Jungle 4 signing digest, WharfKit recovery of the published vectors, and a policy gate. The educational threshold engine in `src/threshold.ts` walks DKG and presign and then refuses to sign.
+None of the engines' `sign` paths. It does run:
+
+- K1 canonical counts, low-S + recid flip, presign queue policy
+- Jungle 4 signing digest (TS + Rust)
+- WharfKit 4.0.2 recovery of published vectors
+- Policy gate, strategies, MCP tools, offline simulate fixtures
+- Educational threshold engine: DKG/presign tokens, then `sign()` throws
+- Gated lab `get_info` / `push_transaction` (not a threshold ceremony)
+
+[ENGINE.md](ENGINE.md) · [GAP-AUDIT.md](GAP-AUDIT.md)
