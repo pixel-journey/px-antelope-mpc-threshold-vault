@@ -39,7 +39,7 @@ Telos completed its Savanna transition in July 2026. The experimental Quantum Te
 | Transfer XPR | `eosio.token` | Move the system token. |
 | Proton-native contracts | varies | Only after the gate has an allow-list entry. |
 
-XPR Network and Proton share the same chain id. The gate must be given that id explicitly. The playbook catalog does not paste it, because the id is already in `@wharfkit/session`'s `Chains` and in [docs/NETWORKS.md](NETWORKS.md).
+XPR Network and Proton share the same chain id. The gate must be given that id explicitly.
 
 ## UX Network
 
@@ -65,4 +65,4 @@ This course locks the Antelope digest. It does not produce an Ethereum transacti
 - Call `updateauth`, `setcode`, or `deleteauth` from the agent permission.
 - Skip the gate because the model sounds sure.
 
-See [AGENT-STRATEGIES.md](AGENT-STRATEGIES.md) for the share roles, [DECIDE.md](DECIDE.md) for the order to check them, and [NETWORKS.md](NETWORKS.md) for the chain ids.
+See [AGENT-STRATEGIES.md](AGENT-STRATEGIES.md) for the share roles and [NETWORKS.md](NETWORKS.md) for the chain ids.
