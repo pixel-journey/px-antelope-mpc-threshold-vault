@@ -1,30 +1,43 @@
-# The lab signer, and what it is not
+# Lab signer — throwaway `SIG_K1_` after allow
 
-[src/labsign.ts](../src/labsign.ts) produces a throwaway recoverable `SIG_K1_` after the policy gate allows a proposal.
+Module: [src/labsign.ts](../src/labsign.ts).
 
 ## What it is
 
-`createLabKey()` makes one secp256k1 `PrivateKey` in-process. `signAllowed()` signs only when:
+After the policy gate **allows** a proposal, the course can attach a recoverable `SIG_K1_` produced with a **throwaway** key over a **proposal identifier** (a stable string derived from the proposal fields). That teaches:
 
-1. The policy gate returned `ok: true`.
-2. The chain id is in the **allowed lab set** (default `LAB_CHAIN_IDS`, or the same set passed via `allowedChainIds` / policy `labChainIds` after `extraLabChainIds`).
-3. Mainnets are never in that set.
-4. `handoff()` bound the same fields the agent proposed.
-
-`recoverLab()` recovers the public key from the signature and the proposal id.
-
-Strategies call this automatically after allow, including operator-opted Telos/XPR testnets when using `runStrategyWithPolicy`.
+- encode/parse of `SIG_K1_` via the codec path
+- that “signature after allow” is a separate step from “policy decide”
+- that agents should not treat every base58 string as a chain-valid action signature
 
 ## What it is not
 
-- Not a threshold share, DKLs23, or CGGMP24  
-- Not a co-signer in another process  
-- Does not broadcast (`src/broadcast.ts` still refuses send)  
-- Signature is over the **proposal id**, not `SHA-256(chain_id ‖ packed_tx ‖ cfd_hash)`  
-- A node will **not** accept it as an action signature  
+| Claim | Reality |
+| --- | --- |
+| Node-accepted transfer signature | **No** — digest is not `sig_digest(chain_id ‖ packed ‖ cfd)` |
+| Threshold share output | **No** — single lab key |
+| Production custody | **No** |
+| Input to `pushLabTransaction` as proof of `signedAntelopeDigest` | **No** — that flag must mean a real Antelope digest was signed |
 
-That is intentional. The lab key teaches the agent-visible shape (signature string, pubkey, recovery). Real Antelope digests remain in [src/digest.ts](../src/digest.ts). The mock engine in [src/threshold.ts](../src/threshold.ts) still refuses to sign.
+## Flow
 
-## When to use it
+```ts
+import { createLabKey, signAllowed } from "./labsign.js";
+import { createPolicy } from "./policy.js";
 
-Tests, notebooks, agent dry-runs on lab/opted testnets. Never put the lab key on an account that holds value.
+const decision = createPolicy().propose(proposal);
+if (decision.ok) {
+  const lab = signAllowed(createLabKey(), proposal, decision, "agent.pxj");
+  // lab.signature starts with SIG_K1_
+}
+```
+
+Strategies call this path automatically on default-lab allows. Operator opt-in testnets get the same after `extraLabChainIds`.
+
+## Chain allow list
+
+Lab sign refuses if `proposal.chainId` is not in the policy’s effective lab set (default WAX Testnet + Jungle 4, plus operator extras). Mainnets never.
+
+## Related
+
+Real digests: [src/digest.ts](../src/digest.ts) · Push honesty: [PUSH.md](PUSH.md) · Codec: [src/codec.ts](../src/codec.ts)
