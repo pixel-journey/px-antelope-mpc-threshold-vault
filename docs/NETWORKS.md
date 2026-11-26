@@ -26,10 +26,10 @@ Vaulta and EOS share the same chain id. XPR Network and Proton share the same ch
 
 1. The chain id (so the signing digest is bound to that chain).
 2. A working RPC endpoint that answers `/v1/chain/get_info` and `/v1/chain/push_transaction`.
-3. The system token symbol and precision (WAX is 8 decimals on mainnet in some contracts, 4 in others; check the token contract).
+3. The system token symbol and its precision. This gate counts a lab amount as 4-decimal units, so `10000n` is `1.0000`. That matches A, TLOS, and XPR. WAX's `eosio.token` asset uses 8 decimal places (`1.00000000 WAX`). A co-signer packing a real WAX transfer must use that precision. The lab cap is not a claim about mainnet asset encoding.
 4. A permission that is allowed to call `eosio.token::transfer` (or whatever action the agent is supposed to take).
 
-The policy gate in `src/policy.ts` currently only allows WAX Testnet and Jungle 4. To let an agent propose a transfer on Telos or XPR, add the chain id to the allow-list and give the agent an alias that resolves to a real account on that chain. The gate still refuses `updateauth`, `setcode`, and free-typed recipient names.
+The policy gate in `src/policy.ts` currently only allows WAX Testnet and Jungle 4, and it requires the matching symbol: WAX on WAX Testnet, A on Jungle 4. To let an agent propose a transfer on Telos or XPR, add the chain id to the allow-list and give the agent an alias that resolves to a real account on that chain. The gate still refuses `updateauth`, `setcode`, and free-typed recipient names.
 
 ## Testnets first, then mainnets
 
