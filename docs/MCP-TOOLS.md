@@ -9,11 +9,13 @@ Callable surface: [src/mcp.ts](../src/mcp.ts). These are **shapes** an agent run
 | `inspect_playbook` | `inspectPlaybook(chainId)` | No | Per-chain action catalog |
 | `propose_transfer` | `proposeTransfer(proposal)` | No | Session policy only |
 | `run_strategy` | `runStrategyTool(id, from, now, options?)` | Yes, after allow | May attach lab SIG |
-| `check_status` | `checkStatus()` | No | Audit, kill, engines |
+| `check_status` | `checkStatus()` | No | Audit, kill, engines, **`r2` blockers** |
 | `lab_sign_allowed` | `labSignAllowed(...)` | Yes | Explicit after allow |
 | `simulate_proposal` | `simulateProposal(p, d, fixture?)` | No | Offline fixtures |
 | `broadcast_status` | `broadcastStatus(chainId)` | No | Candidate vs locked |
 | `list_engines` | `listEnginesTool()` | No | Mock only available |
+
+`checkStatus().r2.ready` is `false` until Phase R.2 admission rows are actually met. `httpPushImplemented` stays `false` on the MCP surface even though an operator script can call `pushLabTransaction`.
 
 ## Session policy
 
@@ -43,8 +45,8 @@ Production should still call live `/v1/chain/compute_transaction` on a lab endpo
 | Free-text recipients | Aliases only |
 | `updateauth` / `setcode` | Human / cold path |
 | **`push_transaction`** | Use `pushLabTransaction` from a controlled script after readiness — not model-fired |
-| Real threshold `sign` | Phase R.2; mock throws |
+| Real threshold `sign` | Phase R.2; mock throws; see `r2` on `check_status` |
 
-Lab HTTP helpers: [src/labClient.ts](../src/labClient.ts) · [PUSH.md](PUSH.md).
+Lab HTTP helpers: [src/labClient.ts](../src/labClient.ts) · [PUSH.md](PUSH.md) · [ENGINE.md](ENGINE.md).
 
 Skills: [antelope-agent-propose](../skills/antelope-agent-propose/SKILL.md) · [antelope-agentic-payments](../skills/antelope-agentic-payments/SKILL.md).
