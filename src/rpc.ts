@@ -1,24 +1,25 @@
 /**
- * Antelope lab RPC helpers for a *later* dry-run client.
+ * Antelope lab RPC helpers.
  *
- * This module catalogs public lab endpoints and builds request shapes for
- * compute_transaction / get_info / get_required_keys. It does not fetch by
- * default. `push_transaction` builders are omitted on purpose — use
- * broadcast.ts guards if a future module adds opt-in testnet send.
+ * Builds request shapes for get_info, compute_transaction, and — when the
+ * push readiness checklist passes — push_transaction. Does not fetch by
+ * default. Teaching push is intentional; shipping an unsafe sender is not.
  */
 
+import {
+  evaluateBroadcast,
+  evaluatePushReadiness,
+  type PushReadinessInput,
+} from "./broadcast.js";
 import { CHAINS, LAB_CHAIN_IDS } from "./digest.js";
-import { evaluateBroadcast } from "./broadcast.js";
 
 export interface LabEndpoint {
   name: string;
   chainId: string;
-  /** Public HTTP API root (no trailing slash required). */
   url: string;
   kind: "lab" | "testnet-opt-in";
 }
 
-/** Greymass-style public nodes used in docs. Not a reliability SLA. */
 export const LAB_ENDPOINTS: readonly LabEndpoint[] = [
   {
     name: "WAX Testnet",
@@ -54,23 +55,27 @@ export function isDefaultLabChain(chainId: string): boolean {
   return LAB_CHAIN_IDS.includes(chainId as (typeof LAB_CHAIN_IDS)[number]);
 }
 
-/** Paths an educational agent may eventually call on a lab node. */
 export const LAB_RPC_PATHS = {
   getInfo: "/v1/chain/get_info",
   getRequiredKeys: "/v1/chain/get_required_keys",
   computeTransaction: "/v1/chain/compute_transaction",
   sendReadOnlyTransaction: "/v1/chain/send_read_only_transaction",
-} as const;
-
-/** Paths this course must never wrap as a default agent tool. */
-export const FORBIDDEN_RPC_PATHS = {
+  /** Final stage — only after evaluatePushReadiness.ready */
   pushTransaction: "/v1/chain/push_transaction",
   sendTransaction2: "/v1/chain/send_transaction2",
 } as const;
 
 export interface ComputeTransactionBody {
-  /** Packed signed or unsigned transaction object — opaque to this course. */
   transaction: unknown;
+}
+
+export interface PushTransactionBody {
+  /** Signed packed transaction as the node expects. */
+  transaction: unknown;
+}
+
+function root(endpoint: LabEndpoint): string {
+  return endpoint.url.replace(/\/$/, "");
 }
 
 export function buildComputeTransactionRequest(
@@ -78,22 +83,61 @@ export function buildComputeTransactionRequest(
   body: ComputeTransactionBody,
 ): { url: string; method: "POST"; body: ComputeTransactionBody; allowed: true } {
   const gate = evaluateBroadcast(endpoint.chainId);
-  if (!gate.ok) {
-    throw new Error(`compute_transaction blocked: ${gate.reason}`);
-  }
+  if (!gate.ok) throw new Error(`compute_transaction blocked: ${gate.reason}`);
   return {
-    url: `${endpoint.url.replace(/\/$/, "")}${LAB_RPC_PATHS.computeTransaction}`,
+    url: `${root(endpoint)}${LAB_RPC_PATHS.computeTransaction}`,
     method: "POST",
     body,
     allowed: true,
   };
 }
 
-/** Always throws — documents that push is out of scope. */
-export function buildPushTransactionRequest(_endpoint: LabEndpoint): never {
-  throw new Error(
-    "push_transaction is not offered by this educational course; see src/broadcast.ts",
-  );
+export type PushBuildResult =
+  | {
+      ok: true;
+      url: string;
+      method: "POST";
+      body: PushTransactionBody;
+      /** Still false in this package — no fetch is performed here. */
+      httpSendImplemented: false;
+      note: string;
+    }
+  | { ok: false; readiness: ReturnType<typeof evaluatePushReadiness> };
+
+/**
+ * Build a push_transaction request **shape** when the curriculum checklist passes.
+ * Does not HTTP-send. Phase W can fetch(url) only after this returns ok: true
+ * and an operator-controlled sender is wired.
+ */
+export function buildPushTransactionRequest(
+  endpoint: LabEndpoint,
+  body: PushTransactionBody,
+  readinessInput: Omit<PushReadinessInput, "chainId" | "senderImplemented"> & {
+    /** Defaults false in this course. */
+    senderImplemented?: boolean;
+  },
+): PushBuildResult {
+  const readiness = evaluatePushReadiness({
+    chainId: endpoint.chainId,
+    policyAllowed: readinessInput.policyAllowed,
+    signedAntelopeDigest: readinessInput.signedAntelopeDigest,
+    dryRunOk: readinessInput.dryRunOk,
+    operatorOptsIntoPush: readinessInput.operatorOptsIntoPush,
+    senderImplemented: readinessInput.senderImplemented ?? false,
+  });
+
+  if (!readiness.ready) {
+    return { ok: false, readiness };
+  }
+
+  return {
+    ok: true,
+    url: `${root(endpoint)}${LAB_RPC_PATHS.pushTransaction}`,
+    method: "POST",
+    body,
+    httpSendImplemented: false,
+    note: "Checklist passed and URL built; this package still does not fetch. Wire Phase W sender deliberately.",
+  };
 }
 
 export function listLabRpcSummary() {
@@ -102,6 +146,6 @@ export function listLabRpcSummary() {
     defaultLab: isDefaultLabChain(e.chainId),
     broadcastCandidate: evaluateBroadcast(e.chainId).ok,
     paths: { ...LAB_RPC_PATHS },
-    forbidden: { ...FORBIDDEN_RPC_PATHS },
+    pushIsEndStage: true as const,
   }));
 }
