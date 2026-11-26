@@ -14,6 +14,5 @@ Work in this repository, not from memory.
 - `allowedByDefaultGate: true` is the only action you may propose without an operator changing `src/policy.ts`.
 - Vaulta and EOS are one chain id. XPR Network and Proton are one chain id. Do not treat the names as two networks.
 - A transfer on one chain must not be replayed on another. The chain id inside the signing digest is what stops that. Do not strip it.
-- Walk [docs/DECIDE.md](../../docs/DECIDE.md) before calling the gate.
 
 Read [docs/CHAIN-OPPORTUNITIES.md](../../docs/CHAIN-OPPORTUNITIES.md) and [docs/MCP-TOOLS.md](../../docs/MCP-TOOLS.md). Run `npm test`. Do not add a signer to satisfy this skill.
