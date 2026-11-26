@@ -1,63 +1,62 @@
 # Agent strategies on Antelope
 
-An agent that can act on Antelope is an agent that can propose a narrow action, have that proposal checked by something that is not the model, and then obtain a signature that the network will accept. The signature is one 65-byte value. The network does not see how many parties helped produce it.
+An agent proposes a narrow action, a non-model gate decides, and only then may a signature be produced. The network sees one 65-byte value, not the roster.
 
-The callable catalog is [src/strategies.ts](../src/strategies.ts). `runStrategy("wax-testnet-tip", from, now)` is one of four allows today. The other ids are refusals the agent can list and learn from. See [STRATEGIES.md](STRATEGIES.md).
+Callable catalog: [src/strategies.ts](../src/strategies.ts) · MCP: [src/mcp.ts](../src/mcp.ts).
 
 ```ts
-import { listStrategyIds, runStrategy, strategiesByTag } from "../src/strategies.js";
-import { defaultGateActions, PLAYBOOKS } from "../src/playbooks.js";
+import { runStrategyTool, listStrategiesTool, simulateProposal, broadcastStatus } from "../src/mcp.js";
 
-listStrategyIds();
-strategiesByTag("lab");
-defaultGateActions();
+listStrategiesTool({ expect: "allow" });
+runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
 ```
 
 ## Three share roles
 
-| Share | Where it lives | What it can do alone |
+| Share | Where it lives | Alone |
 | --- | --- | --- |
-| User / browser | Encrypted local storage, unlocked by a passkey or passphrase | Nothing. Needs a second share. |
-| Policy co-signer | Server process that decodes the transaction and runs the gate | Nothing. Needs a second share. |
-| Agent / recovery | Offline file for a human, or a `linkauth`-scoped key for an agent | Nothing. Needs a second share. |
+| User / browser | Local, passkey/passphrase | Cannot pay |
+| Policy co-signer | Server that decodes tx + runs gate | Cannot pay |
+| Agent / recovery | Offline file or `linkauth`-scoped key | Cannot pay |
 
-A 2-of-3 means any two of those can produce a signature. The agent never holds the only share. If the agent is compromised, the owner rotates the `agent` permission with one `updateauth`. The tokens and NFTs stay on the account name.
+2-of-3: any two can sign. Compromised agent → `updateauth` on the agent permission; balances stay on the account name.
 
-## Four tools an agent is allowed to call
+## MCP tools in this course (9)
 
-These are the only tools the blueprint's MCP server exposes. None of them hold a key or sign.
+None hold a threshold share. None broadcast.
 
-1. **Inspect** — Read an account's permissions, `linkauth` bindings, and CPU/NET/RAM. No write.
-2. **Decode and simulate** — Unpack an action and ask a node what the balance deltas would be. No write.
-3. **Propose a transfer** — Send a chain id, a recipient alias, an amount, and a short memo. The policy gate resolves the alias. Free-typed account names are refused. Named moves: `runStrategy`.
-4. **Check status** — Ask whether the gate auto-approved the proposal or escalated it to a human.
+| Tool | Role |
+| --- | --- |
+| `list_networks` | Playbooks + lab/broadcast flags |
+| `list_strategies` | Catalog filters |
+| `inspect_playbook` | Per-chain actions |
+| `propose_transfer` | Gate only |
+| `run_strategy` | Gate + optional lab SIG |
+| `check_status` | Audit / kill / lab set |
+| `lab_sign_allowed` | Throwaway lab SIG (not production MCP) |
+| `simulate_proposal` | Local dry-run (not nodeos) |
+| `broadcast_status` | Mainnet lock + course never sends |
 
-`src/policy.ts` is the local stand-in for tool 3. The lab signer in `src/labsign.ts` is a fifth, local step: it signs after an allow, with a throwaway key, and it is not one of these four tools. Do not expose it as an MCP tool that accepts a digest.
+Lab RPC **shapes** for a later client: [src/rpc.ts](../src/rpc.ts) (`compute_transaction` builder only; `push_transaction` always throws).
 
-## Per-chain opportunities (summary)
+## Per-chain opportunities
 
-| Network | Token | Callable strategy today |
-| --- | --- | --- |
-| WAX Testnet | WAX | `wax-testnet-tip`, `treasury-tip` |
-| Jungle 4 | A | `jungle-tip`, `peer-tip` |
-| WAX / Vaulta / Telos / XPR / UX mainnets | varies | Catalogued as `*-tip` refusals until an operator opens the chain |
-| Other testnets (Telos, XPR) | varies | Catalogued refusals (`telos-testnet-tip`, `xpr-testnet-tip`) |
-| AtomicAssets / system / DEX shapes | — | In playbooks + strategy catalog; all refused by default |
+| Network | Callable today |
+| --- | --- |
+| WAX Testnet | `wax-testnet-tip`, `treasury-tip` |
+| Jungle 4 | `jungle-tip`, `peer-tip` |
+| Telos / XPR testnets | Via `runStrategyTool(..., { extraLabChainIds })` |
+| Mainnets | Always refuse |
+| AtomicAssets / system / DEX | Catalogued refusals |
 
-Full tables: [CHAIN-OPPORTUNITIES.md](CHAIN-OPPORTUNITIES.md). Machine-readable: [src/playbooks.ts](../src/playbooks.ts).
+Full tables: [CHAIN-OPPORTUNITIES.md](CHAIN-OPPORTUNITIES.md).
 
 ## Cross-chain
 
-An agent that holds a secp256k1 share can, in principle, produce a signature for any chain that accepts secp256k1. Antelope, Ethereum, and Bitcoin Taproot (via FROST, not ECDSA) are different signature formats and different digest rules. This course locks the Antelope digest and the K1 canonical check. It does not produce an Ethereum transaction or a Bitcoin signature.
+Secp256k1 shares do not invent Ethereum or Taproot formats. This course locks Antelope digests and K1 canonicality only. Chain id stays inside the signing digest — do not strip it.
 
-Lab tips on different chains do not share a proposal id. A real signing digest would differ too, because the chain id is inside `SHA-256(chain_id || packed_transaction || cfd_hash)`. Do not strip it.
+## Must not
 
-## What the agent must not do
+- Trust a foreign digest · seed nonces from chain entropy · hold the only share · skip the gate · call `updateauth`/`setcode` from the agent path · push transactions from this tree
 
-- Trust a digest that someone else hashed. Pack the transaction and hash it.
-- Use a transaction id, a block id, or `orng.wax` as a nonce.
-- Hold the only share.
-- Skip the gate because the model "sounds sure."
-- Call `updateauth`, `setcode`, or `deleteauth` from the agent permission.
-
-See [AGENTIC-PAYMENTS.md](AGENTIC-PAYMENTS.md) for the payment loop and [NETWORKS.md](NETWORKS.md) for the chain ids.
+See [AGENTIC-PAYMENTS.md](AGENTIC-PAYMENTS.md) · [AGENT-RECIPE.md](AGENT-RECIPE.md) · [GAP-AUDIT.md](GAP-AUDIT.md).
