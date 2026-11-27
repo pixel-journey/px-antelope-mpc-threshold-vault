@@ -3,11 +3,17 @@
  *
  * None hold a threshold share. None HTTP-push by default.
  * Lab signatures are throwaway and not node-valid packed-tx signatures.
+ * Mainnet path: build_unsigned_handoff → human Anchor / msig / hardware.
  */
 
 import { evaluateBroadcast } from "./broadcast.js";
 import { CHAINS, LAB_CHAIN_IDS } from "./digest.js";
 import { handoff } from "./dryrun.js";
+import {
+  buildUnsignedHandoff,
+  type UnsignedAction,
+  type UnsignedHandoff,
+} from "./esr.js";
 import { createLabKey, signAllowed, type LabSignature } from "./labsign.js";
 import { PLAYBOOKS, defaultGateActions, playbookByChainId } from "./playbooks.js";
 import {
@@ -41,7 +47,8 @@ export type McpToolName =
   | "lab_sign_allowed"
   | "simulate_proposal"
   | "broadcast_status"
-  | "list_engines";
+  | "list_engines"
+  | "build_unsigned_handoff";
 
 export interface McpToolSpec {
   name: McpToolName;
@@ -102,6 +109,12 @@ export const MCP_TOOL_SPECS: readonly McpToolSpec[] = [
     name: "list_engines",
     description:
       "Threshold engine roadmap. Only educational-mock is constructible. R.2 admission is on check_status.",
+    canProduceLabSignature: false,
+  },
+  {
+    name: "build_unsigned_handoff",
+    description:
+      "Mainnet-safe: build unsigned action handoff + educational ESR URI for human Anchor/msig/hardware. Never signs or pushes.",
     canProduceLabSignature: false,
   },
 ];
@@ -222,6 +235,18 @@ export function broadcastStatus(chainId: string) {
 
 export function listEnginesTool() {
   return listEngines();
+}
+
+/** Mainnet-safe human-sign path. Does not sign or push. */
+export function buildUnsignedHandoffTool(input: {
+  chainId: string;
+  actions: UnsignedAction[];
+  summary: string;
+}): UnsignedHandoff {
+  return buildUnsignedHandoff({
+    ...input,
+    allowMainnetHandoff: true,
+  });
 }
 
 export const LAB_CHAIN_ID_MAP = {
