@@ -2,7 +2,7 @@
   "name": "px-antelope-mpc-threshold-vault",
   "private": true,
   "type": "module",
-  "description": "Educational Antelope MPC course for agentic payments. WharfKit 4.0.2 recovers vectors. Policy gate, strategies, MCP tools, presign queue, lab signer, simulate fixtures, push readiness, gated lab get_info/push. R.1 Rust format crate. No threshold WASM sign. No HTTP by default. Unaudited.",
+  "description": "Educational Antelope MPC + mainnet agent skills. WharfKit 4.0.2 vectors. Policy, MCP (11 tools incl. unsigned handoff), presign, simulate, gated lab push. Mainnet = human ESR path. No threshold WASM sign. Unaudited.",
   "scripts": {
     "test": "vitest run",
     "check-skills": "node scripts/check-skills.mjs"
