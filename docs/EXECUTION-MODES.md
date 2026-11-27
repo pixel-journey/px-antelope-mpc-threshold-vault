@@ -1,43 +1,45 @@
-# Execution modes — mainnet utility without unaudited MPC
+# Execution modes
 
-This course splits **what agents may do today** from **what still requires reviewed threshold engines**.
+**Goal:** agents trade and operate alone inside operator bounds. Human cosign is optional, for actions that change authority or exceed the budget. See [AUTONOMY.md](AUTONOMY.md).
+
+What ships in this tree today is narrower than that goal. The table is the **current code**, not a product rule that every fill needs a person.
 
 | Mode | Testnets (WAX Testnet, Jungle 4, operator-opt-in labs) | Mainnets (WAX, Vaulta, Telos, XPR, UX) |
 | --- | --- | --- |
-| Read / inspect / playbooks | Full | Full (chain ids, symbols, action catalogs) |
-| Offline simulate fixtures | Full | Full (same fixtures; not live nodeos) |
-| Policy gate on transfer proposals | Lab allows + refusals | **Refuse spend / auto-sign**; may still *describe* payloads |
-| Lab `SIG_K1_` (proposal id) | After allow | Never |
-| Gated `pushLabTransaction` | After honest readiness + `enableNetwork` | **Hard refuse** |
-| Threshold `sign` | Mock throws; R.2 future under testnet banner | **Never on unaudited stack** |
-| Human-signed path | Optional | **Preferred:** unsigned handoff / ESR for Anchor, hardware, `eosio.msig` |
+| Read / playbooks / skills | Full | Full |
+| Offline simulate fixtures | Full | Full (fixtures, not live nodeos) |
+| Policy gate on transfer proposals | Lab allows + refusals | **Refuse auto-sign in the default gate** until an operator opens a bounded agent permission |
+| Lab `SIG_K1_` (proposal id) | After allow | Never — not a node signature |
+| Gated `pushLabTransaction` | After readiness + `enableNetwork` | **Refused by this build** |
+| Threshold `sign` | Mock throws; R.2 later, testnet first | **Not on an unaudited stack** |
+| Unsigned ESR | Optional transport to any signer | Real `esr://` for `eosio.token::transfer`; other actions still `esr://edu/` |
 
-## Mainnet-safe agent path (no keys in the model)
+## Bounded-agent path (end state)
 
 ```text
-list networks / skills → policy-check intent
-  → build unsigned action payload (or ESR handoff)
-  → human signs in Anchor / hardware / msig
-  → human or ops pushes
+skills + chain profile
+  → proposal inside caps / allowlist
+  → simulate (no hidden updateauth)
+  → agent permission signs
+  → push
+  → kill switch still works
 ```
 
-Modules:
+## Cosign path (when the operator wants it)
 
-| Piece | Role |
-| --- | --- |
-| `src/esr.ts` | Unsigned handoff record + educational ESR-shaped URI builder |
-| `skills/antelope-powerup-and-resources` | Per-chain CPU/NET/RAM |
-| `skills/antelope-atomicassets` | NFT lifecycle + RAM traps |
-| `skills/antelope-atomicmarket` | Atomic sale/purchase bundles |
-| `skills/antelope-alcor-defi` | Multi-chain AMM safety |
-| `skills/antelope-permissions-and-msig` | `updateauth` / `linkauth` / msig |
-| `skills/antelope-chain-profiles` | Chain registry index |
+```text
+build unsigned payload / ESR
+  → owner, hardware, msig, or a separate signer process
+  → that signer pushes
+```
 
-## Non-negotiables (unchanged)
+Use cosign for `updateauth`, `setcode`, and cap changes. Do not require it for every swap inside the trade permission.
 
-1. No mainnet value behind unaudited threshold orchestration  
-2. No `sign_digest` MCP tool  
-3. No model-fired `push_transaction`  
-4. Mainnet agent output is **unsigned** (or human msig), never a mock lab SIG  
+## Still true in this repository
 
-See [GAP-AUDIT.md](GAP-AUDIT.md) · [PUSH.md](PUSH.md) · [ENGINE.md](ENGINE.md).
+1. No mainnet value on the unaudited threshold mock.  
+2. No `sign_digest` MCP tool.  
+3. No model-fired `push_transaction` — the runtime that holds the key calls push on purpose.  
+4. Default policy does not spend mainnet. Opening that is an operator decision plus a real signer, not a missing human click on each trade.
+
+See [AUTONOMY.md](AUTONOMY.md) · [GAP-AUDIT.md](GAP-AUDIT.md) · [PUSH.md](PUSH.md) · [ENGINE.md](ENGINE.md).
