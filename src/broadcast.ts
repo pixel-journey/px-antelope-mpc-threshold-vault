@@ -1,7 +1,7 @@
 /**
  * Broadcast / push_transaction posture.
  *
- * Learners *should* understand push_transaction — it is the last step of a
+ * Learners should understand push_transaction — it is the last step of a
  * real agent payment loop. This course does not hide it. It also does not
  * call it by default.
  *
@@ -11,14 +11,14 @@
  *   3. compute_transaction dry-run on a lab node
  *   4. only then push_transaction on a *testnet*, with eyes open
  *
- * Mainnets are never candidates here. A researcher who later adds an HTTP
- * sender must still pass `evaluatePushReadiness` and keep mainnet locked.
+ * Mainnets are never candidates here. Opt-in sender: `pushLabTransaction` in labClient.ts.
+ * Mainnet human path: unsigned handoff via `src/esr.ts` (Anchor / msig / hardware).
  */
 
 import { CHAINS, LAB_CHAIN_IDS } from "./digest.js";
 import { MAINNET_CHAIN_IDS } from "./policy.js";
 
-/** Chains that may receive an educational testnet push once a sender exists. */
+/** Chains that may receive an educational testnet push once readiness is green. */
 export const BROADCAST_CANDIDATE_CHAIN_IDS: readonly string[] = [
   ...LAB_CHAIN_IDS,
   CHAINS.telosTestnet,
@@ -46,21 +46,18 @@ export function assertBroadcastAllowed(chainId: string): void {
 
 export interface PushReadinessInput {
   chainId: string;
-  /** Policy gate already returned ok. */
   policyAllowed: boolean;
   /**
    * True only if the signature is over SHA-256(chain_id‖packed‖cfd),
    * not over a lab proposal id.
    */
   signedAntelopeDigest: boolean;
-  /** Prefer true: ran compute_transaction (or equivalent) without error. */
   dryRunOk: boolean;
   /**
-   * Explicit operator/developer intent to leave the “reading only” phase.
-   * Agents must not set this from model text alone.
+   * Explicit operator/developer intent. Agents must not set this from model text alone.
    */
   operatorOptsIntoPush: boolean;
-  /** This process actually implements HTTP push (this course: false). */
+  /** True when calling pushLabTransaction (sets this internally). */
   senderImplemented: boolean;
 }
 
@@ -73,15 +70,10 @@ export interface PushCheck {
 export interface PushReadiness {
   ready: boolean;
   checks: PushCheck[];
-  /** Human-facing summary of what is still missing. */
   blockers: string[];
   curriculumStage: "learn-gate" | "learn-digest" | "learn-dry-run" | "learn-push" | "blocked-mainnet";
 }
 
-/**
- * Structured checklist for the final curriculum stage.
- * Does not send anything.
- */
 export function evaluatePushReadiness(input: PushReadinessInput): PushReadiness {
   if (MAINNET_CHAIN_IDS.includes(input.chainId)) {
     return {
@@ -91,7 +83,7 @@ export function evaluatePushReadiness(input: PushReadinessInput): PushReadiness 
         {
           id: "not-mainnet",
           ok: false,
-          detail: "Mainnet push is out of scope for this educational repository.",
+          detail: "Mainnet push is out of scope; use unsigned ESR handoff for human sign.",
         },
       ],
       blockers: ["mainnet"],
@@ -139,8 +131,8 @@ export function evaluatePushReadiness(input: PushReadinessInput): PushReadiness 
       id: "sender-implemented",
       ok: input.senderImplemented,
       detail: input.senderImplemented
-        ? "HTTP sender is wired."
-        : "This course does not ship a push HTTP client yet (Phase W).",
+        ? "HTTP sender is wired (pushLabTransaction)."
+        : "Pass senderImplemented via pushLabTransaction or a custom sender.",
     },
   ];
 
@@ -157,13 +149,9 @@ export function evaluatePushReadiness(input: PushReadinessInput): PushReadiness 
   return { ready, checks, blockers, curriculumStage };
 }
 
-/**
- * Default course behavior: explain that push is the final stage, not forbidden knowledge.
- * Still does not send.
- */
 export function refuseBroadcast(chainId: string): never {
   assertBroadcastAllowed(chainId);
   throw new Error(
-    "push_transaction is the final curriculum stage and is not HTTP-implemented in this package yet; see docs/PUSH.md and evaluatePushReadiness()",
+    "push_transaction is the final curriculum stage; use evaluatePushReadiness + pushLabTransaction on testnets only — see docs/PUSH.md",
   );
 }
