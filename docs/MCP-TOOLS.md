@@ -14,8 +14,22 @@ Callable surface: [src/mcp.ts](../src/mcp.ts). These are **shapes** an agent run
 | `simulate_proposal` | `simulateProposal(p, d, fixture?)` | No | Offline fixtures |
 | `broadcast_status` | `broadcastStatus(chainId)` | No | Candidate vs locked |
 | `list_engines` | `listEnginesTool()` | No | Mock only available |
+| `build_unsigned_handoff` | `buildUnsignedHandoffTool(...)` | No | **Mainnet human-sign path** |
 
 `checkStatus().r2.ready` is `false` until Phase R.2 admission rows are actually met. `httpPushImplemented` stays `false` on the MCP surface even though an operator script can call `pushLabTransaction`.
+
+## Mainnet human path
+
+```ts
+buildUnsignedHandoffTool({
+  chainId: CHAINS.waxMainnet,
+  summary: "Tip treasury",
+  actions: [/* unsigned actions */],
+});
+// → { kind: "unsigned-human-sign", esrUri: "esr://edu/...", broadcastLocked: true, warnings }
+```
+
+Educational ESR only. Production should re-encode with `@wharfkit/signing-request`. See [EXECUTION-MODES.md](EXECUTION-MODES.md).
 
 ## Session policy
 
@@ -35,18 +49,14 @@ killPolicy("drill");
 | `assert-revert` | `except` populated → refuse |
 | `context-free-or-deferred` | Deprecated patterns → refuse |
 
-Production should still call live `/v1/chain/compute_transaction` on a lab endpoint after allow; offline fixtures teach the policy boundary only.
-
 ## Intentionally not MCP tools
 
 | Action | Why |
 | --- | --- |
 | `sign_digest` | Co-signer must hash packed tx |
 | Free-text recipients | Aliases only |
-| `updateauth` / `setcode` | Human / cold path |
-| **`push_transaction`** | Use `pushLabTransaction` from a controlled script after readiness — not model-fired |
-| Real threshold `sign` | Phase R.2; mock throws; see `r2` on `check_status` |
+| `updateauth` / `setcode` as auto-agent tools | Human / cold path |
+| **`push_transaction`** | Operator `pushLabTransaction` only |
+| Real threshold `sign` | Phase R.2; see `r2` on `check_status` |
 
-Lab HTTP helpers: [src/labClient.ts](../src/labClient.ts) · [PUSH.md](PUSH.md) · [ENGINE.md](ENGINE.md).
-
-Skills: [antelope-agent-propose](../skills/antelope-agent-propose/SKILL.md) · [antelope-agentic-payments](../skills/antelope-agentic-payments/SKILL.md).
+Lab HTTP: [src/labClient.ts](../src/labClient.ts) · [PUSH.md](PUSH.md) · [ENGINE.md](ENGINE.md).
