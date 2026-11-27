@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CHAINS } from "./digest.js";
 import {
   broadcastStatus,
+  buildUnsignedHandoffTool,
   checkStatus,
   inspectPlaybook,
   killPolicy,
@@ -15,11 +16,12 @@ import {
 } from "./mcp.js";
 
 describe("MCP-shaped tools", () => {
-  it("advertises simulate and broadcast_status", () => {
+  it("advertises simulate, engines, and unsigned handoff", () => {
     const names = MCP_TOOL_SPECS.map((t) => t.name);
     expect(names).toContain("simulate_proposal");
     expect(names).toContain("broadcast_status");
     expect(names).toContain("list_engines");
+    expect(names).toContain("build_unsigned_handoff");
   });
 
   it("lists networks with broadcast evaluation", () => {
@@ -64,5 +66,28 @@ describe("MCP-shaped tools", () => {
   it("broadcast_status is readiness-oriented", () => {
     expect(broadcastStatus(CHAINS.waxMainnet).ok).toBe(false);
     expect(broadcastStatus(CHAINS.waxTestnet).httpPushImplemented).toBe(false);
+  });
+
+  it("build_unsigned_handoff is mainnet-safe and does not push", () => {
+    const h = buildUnsignedHandoffTool({
+      chainId: CHAINS.waxMainnet,
+      summary: "Human tip",
+      actions: [
+        {
+          account: "eosio.token",
+          name: "transfer",
+          authorization: [{ actor: "human.wam", permission: "active" }],
+          data: {
+            from: "human.wam",
+            to: "treasury.pxj",
+            quantity: "1.00000000 WAX",
+            memo: "handoff",
+          },
+        },
+      ],
+    });
+    expect(h.kind).toBe("unsigned-human-sign");
+    expect(h.broadcastLocked).toBe(true);
+    expect(h.esrUri.startsWith("esr://edu/")).toBe(true);
   });
 });
