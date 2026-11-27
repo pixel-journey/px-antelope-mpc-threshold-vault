@@ -2,7 +2,7 @@
   "name": "px-antelope-mpc-threshold-vault",
   "private": true,
   "type": "module",
-  "description": "Educational Antelope MPC + mainnet agent skills. WharfKit 4.0.2 vectors. Policy, MCP (11 tools incl. unsigned handoff), presign, simulate, gated lab push. Mainnet = human ESR path. No threshold WASM sign. Unaudited.",
+  "description": "Educational Antelope MPC + mainnet agent skills. WharfKit 4.0.2. Token transfers encode as real ESR. Policy, MCP, gated lab push. No threshold WASM sign. Unaudited.",
   "scripts": {
     "test": "vitest run",
     "check-skills": "node scripts/check-skills.mjs"
@@ -12,7 +12,8 @@
     "@noble/curves": "1.9.7",
     "@noble/hashes": "1.8.0",
     "@wharfkit/antelope": "4.0.2",
-    "@wharfkit/session": "4.0.2"
+    "@wharfkit/session": "4.0.2",
+    "@wharfkit/signing-request": "4.0.2"
   },
   "devDependencies": {
     "vitest": "3.2.4"
