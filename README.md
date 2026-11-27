@@ -1,12 +1,11 @@
-# Antelope MPC, without a mainnet signer
+# Antelope agents that can trade inside bounds
 
-> **Status:** educational reference for **agentic payments** on Antelope. **Unaudited.**  
-> **Two modes:** testnet lab (policy → simulate → gated push) · **mainnet human-sign** (skills + unsigned ESR handoff).  
-> Default gate: **WAX Testnet** + **Jungle 4**. **Mainnets hard-refused for agent push.**  
+> **Goal:** bots operate and trade **on their own**, as safely as the permission, caps, and simulate-step allow. Human approval is optional, not the default for every action. See [docs/AUTONOMY.md](docs/AUTONOMY.md).  
+> **This tree today:** educational and **unaudited**. Default gate is **WAX Testnet** + **Jungle 4**. Mainnet push stays off until an operator opens a bounded agent permission with a real signer.  
 > **No threshold WASM signing** (`sign()` throws). **No model-fired HTTP push.**  
 > **Map:** [docs/INDEX.md](docs/INDEX.md) · [docs/EXECUTION-MODES.md](docs/EXECUTION-MODES.md) · [docs/GAP-AUDIT.md](docs/GAP-AUDIT.md)
 
-Antelope already has a way to rotate a key without moving assets: the account is a **name**, and `eosio::updateauth` changes who may act for it. Threshold ECDSA still matters because a single `SIG_K1_` / `SIG_R1_` hides the signer set. It does **not** replace cold owner multisig.
+The account is a **name**. A custom `trade` permission (or a reviewed threshold share later) can spend a budget without touching `owner`. Threshold ECDSA hides the signer set; it does not replace a cold owner.
 
 ## Quick start
 
@@ -16,7 +15,7 @@ npm test && npm run check-skills
 cargo test -p antelope-crypto-format
 ```
 
-### Testnet agent path
+### Testnet agent path (acts after policy allow)
 
 ```ts
 import { listStrategiesTool, runStrategyTool, listEnginesTool } from "./src/mcp.js";
@@ -26,13 +25,15 @@ runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
 listEnginesTool(); // educational-mock only until Phase R.2
 ```
 
-### Mainnet human-sign path (no keys in the model)
+### Optional cosign transport (not required for in-policy trades)
+
+`eosio.token::transfer` encodes a real `esr://` (WharfKit signing-request 4.0.2). Hand it to a human wallet **or** to another process that holds the trade key. Other actions still use `esr://edu/` until their ABI is local.
 
 ```ts
 import { buildUnsignedHandoffTool } from "./src/mcp.js";
 import { CHAINS } from "./src/digest.js";
 
-const handoff = buildUnsignedHandoffTool({
+const handoff = await buildUnsignedHandoffTool({
   chainId: CHAINS.waxMainnet,
   summary: "Tip treasury 1 WAX",
   actions: [
@@ -44,15 +45,15 @@ const handoff = buildUnsignedHandoffTool({
         from: "human.wam",
         to: "treasury.pxj",
         quantity: "1.00000000 WAX",
-        memo: "human-sign",
+        memo: "agent-or-cosigner",
       },
     },
   ],
 });
-// handoff.esrUri is educational — re-encode with @wharfkit/signing-request for production
+// handoff.esrProtocol === "wharfkit-4.0.2"
 ```
 
-### Optional lab push (explicit, testnet only)
+### Lab push (explicit)
 
 ```ts
 import { pushLabTransaction } from "./src/labClient.js";
@@ -61,16 +62,18 @@ import { pushLabTransaction } from "./src/labClient.js";
 
 ## Skills
 
+Knowledge the agent uses when it acts, not a requirement to stop and ask:
+
 | Pack | Skills |
 | --- | --- |
 | Agent / MPC | `antelope-agent-propose`, `antelope-agentic-payments`, `antelope-network-scope`, `antelope-mpc-sig-format`, `mpc-security-audit`, `antelope-next-step` |
-| Mainnet protocol | `antelope-powerup-and-resources`, `antelope-atomicassets`, `antelope-atomicmarket`, `antelope-alcor-defi`, `antelope-permissions-and-msig`, `antelope-chain-profiles` |
+| Markets and chain | `antelope-powerup-and-resources`, `antelope-atomicassets`, `antelope-atomicmarket`, `antelope-alcor-defi`, `antelope-permissions-and-msig`, `antelope-chain-profiles` |
 
 ## What `npm test` covers
 
-K1 canonical, codecs, digests, WharfKit 4.0.2, policy/strategies, presign, simulate, lab client, **MCP (11 tools)**, museum, threshold mock, **unsigned handoff**, skills linter.
+K1 canonical, codecs, digests, WharfKit 4.0.2, policy/strategies, presign, simulate, lab client, **MCP (11 tools)**, museum, threshold mock, **ESR handoff**, skills linter.
 
-**Does not prove:** real DKLs23/CGGMP24, audited mainnet custody, production ESR binary codec, or that a lab `SIG_K1_` is accepted by nodeos.
+**Does not prove:** real DKLs23/CGGMP24, audited mainnet custody, or that a lab `SIG_K1_` is accepted by nodeos.
 
 ## Engines
 
