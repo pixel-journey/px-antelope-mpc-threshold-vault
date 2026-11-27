@@ -8,44 +8,43 @@ Public one-liners (“No threshold signing. No broadcast. Unaudited.”) are sti
 | --- | --- |
 | Honesty banner / MIT / TypeScript | Done |
 | WharfKit 4.0.2 vector recovery | Done |
-| Network map + **mainnet** hard-refuse | Done (`policy`, `labsign`, `broadcast`, `labClient`) |
+| Network map + **mainnet** hard-refuse on agent push | Done |
+| Two-tier execution modes doc | **Done** ([EXECUTION-MODES.md](EXECUTION-MODES.md)) |
 | K1 canonical / low-S / presign queue | **Executable** |
 | Policy engine + kill + strategies + operator testnets | **Done** |
 | Lab `SIG_K1_` after allow (proposal id) | **Done** |
-| Offline `compute_transaction` fixtures | **Done** (`simulate.ts`) |
-| MCP tools (10) | **Done** |
-| Attack museum + structured CVE cards | **Done** |
-| Agent skills (6) + two-tier CI (`agentskills` + `check-skills.mjs`) | **Done** |
-| Push **curriculum** + **gated** lab sender | **Done** (`evaluatePushReadiness`, `pushLabTransaction`) |
-| Opt-in lab `get_info` | **Done** |
+| Offline `compute_transaction` fixtures | **Done** |
+| MCP tools (10) + `r2` on `check_status` | **Done** |
+| Attack museum + CVE cards | **Done** |
+| MPC + agent skills (core) + two-tier CI | **Done** |
+| **Mainnet skills wave** (powerup, atomicassets, atomicmarket, alcor, permissions-msig, chain-profiles) | **Done** (SKILL.md pack) |
+| **Unsigned ESR-style handoff** | **Done** (`src/esr.ts` educational URI) |
+| Gated lab `get_info` / `pushLabTransaction` | **Done** |
 | Push as MCP tool | **Intentionally omitted** |
-| R.1 Rust format crate (`PUB_*`, `SIG_*`, K1/R1 canonical, low-S) + `deny.toml` | **Done** |
-| Shared `testdata/vectors.json` Vectors 1–4 | **Done** |
-| `ThresholdEngine` registry + mock | **Done** (`sign` throws) |
+| R.1 Rust format + `deny.toml` | **Done** |
+| `ThresholdEngine` mock (`sign` throws) + `r2Admission` | **Done** |
 | Real DKLs23 / CGGMP24 WASM (R.2) | **Not started** |
-| Live WharfKit WalletPlugin registration | Stub / refuse paths only |
-| Authenticated relay / Vault / WebAuthn PRF | Design docs only |
-| Next.js lab / x402 facilitator | Not started |
+| Live WharfKit WalletPlugin registration | Stub only |
+| Production SigningRequest binary codec | Educational placeholder only |
+| Relay / Vault / WebAuthn PRF | Design docs only |
+| Next.js lab / x402 | Not started |
 
-## Integrated agent path
+## Two paths
 
 ```text
-list → propose / run_strategy → simulate fixtures
-  → optional lab SIG_K1_ (not pushable)
-  → optional fetchLabChainInfo({ enableNetwork: true })
-  → optional pushLabTransaction(readiness + enableNetwork)
+Testnet lab: policy → simulate → optional lab SIG → optional gated push
+Mainnet ops: skills/playbooks → unsigned handoff / ESR → human Anchor|msig|hardware
 ```
-
-Mainnet never. Model must not set `operatorOptsIntoPush` or claim `signedAntelopeDigest` for a lab proposal-id signature.
 
 ## Backlog
 
 | Phase | Work |
 | --- | --- |
-| **R.2** | DKLs23 / CGGMP24 behind `ThresholdEngine`; testnet banners |
-| **W+** | Live `AbstractWalletPlugin` co-sign |
-| **I** | Relay, Vault co-signer, WebAuthn PRF |
-| **A / U** | x402 mock, Next.js lab |
+| **ESR+** | Real `@wharfkit/signing-request` encode + QR helpers |
+| **R.2** | DKLs23 / CGGMP24 behind `ThresholdEngine` |
+| **W+** | Live `AbstractWalletPlugin` co-sign (testnet) |
+| **I** | Relay, Vault, WebAuthn PRF |
+| **U / A** | Next.js lab, x402 mock |
 
 ## Non-negotiables
 
@@ -53,5 +52,6 @@ Mainnet never. Model must not set `operatorOptsIntoPush` or claim `signedAntelop
 2. No `sign_digest` MCP tool  
 3. No AGPL / SLL / `backend-rug` / `rug` GMP in-tree  
 4. Model proposes; policy decides; shares stay out of the model process  
+5. Mainnet agent output is unsigned / human-signed — not lab SIG  
 
-See [COMPLETION.md](COMPLETION.md).
+See [COMPLETION.md](COMPLETION.md) · [EXECUTION-MODES.md](EXECUTION-MODES.md).
