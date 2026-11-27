@@ -68,8 +68,8 @@ describe("MCP-shaped tools", () => {
     expect(broadcastStatus(CHAINS.waxTestnet).httpPushImplemented).toBe(false);
   });
 
-  it("build_unsigned_handoff is mainnet-safe and does not push", () => {
-    const h = buildUnsignedHandoffTool({
+  it("build_unsigned_handoff is mainnet-safe and does not push", async () => {
+    const h = await buildUnsignedHandoffTool({
       chainId: CHAINS.waxMainnet,
       summary: "Human tip",
       actions: [
@@ -88,6 +88,8 @@ describe("MCP-shaped tools", () => {
     });
     expect(h.kind).toBe("unsigned-human-sign");
     expect(h.broadcastLocked).toBe(true);
-    expect(h.esrUri.startsWith("esr://edu/")).toBe(true);
+    expect(h.esrProtocol).toBe("wharfkit-4.0.2");
+    expect(h.esrUri.startsWith("esr://")).toBe(true);
+    expect(h.esrUri.startsWith("esr://edu/")).toBe(false);
   });
 });
