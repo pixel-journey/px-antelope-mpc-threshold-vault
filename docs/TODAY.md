@@ -18,21 +18,23 @@ import {
   listEnginesTool,
   checkStatus,
 } from "./mcp.js";
-import { evaluatePushReadiness } from "./broadcast.js";
-import { fetchLabChainInfo, pushLabTransaction } from "./labClient.js";
+import { adviseNext } from "./next.js";
+import { compareDomains } from "./domains.js";
 import { CHAINS } from "./digest.js";
 
 listStrategiesTool({ expect: "allow" });
 const tip = runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
+adviseNext(tip); // lab-only. not a node signature. do not push.
 broadcastStatus(CHAINS.waxMainnet); // locked
-listEnginesTool();
-checkStatus();
-
-// operator extra testnet:
-runStrategyTool("telos-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000), {
-  extraLabChainIds: [CHAINS.telosTestnet],
-});
 ```
+
+## After a strategy
+
+- `adviseNext(result)` from `src/next.ts` — stop, handoff, or lab-only. Never push from the model.
+- `compareDomains(a, b)` from `src/domains.ts` — two handoffs are not one ceremony when the chain id differs.
+- `OPPORTUNITIES` from `src/opportunities.ts` — per-chain rows. Only `callableToday` is a permission. `orng.wax` is WAX-only and is never a nonce.
+
+See [docs/NEXT.md](NEXT.md).
 
 ## Surfaces
 
@@ -40,6 +42,9 @@ runStrategyTool("telos-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000),
 | --- | --- |
 | MCP tools (10) | `mcp.ts` |
 | Strategies + opt-in | `strategies.ts` |
+| Next-step advice | `next.ts` |
+| Cross-chain domains | `domains.ts` |
+| Per-chain opportunities | `opportunities.ts` |
 | Policy | `policy.ts` |
 | Lab sign (proposal id) | `labsign.ts` |
 | Offline simulate fixtures | `simulate.ts` |
@@ -57,8 +62,8 @@ runStrategyTool("telos-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000),
 
 ## Skills
 
-`antelope-agent-propose` · `antelope-agentic-payments` · `antelope-mpc-sig-format` · `mpc-security-audit` · `antelope-network-scope`
+`antelope-agent-propose` · `antelope-agentic-payments` · `antelope-mpc-sig-format` · `mpc-security-audit` · `antelope-network-scope` · `antelope-next-step`
 
 ## Docs map
 
-[GAP-AUDIT](GAP-AUDIT.md) · [COMPLETION](COMPLETION.md) · [AGENT-RECIPE](AGENT-RECIPE.md) · [PUSH](PUSH.md) · [MCP-TOOLS](MCP-TOOLS.md) · [ENGINE](ENGINE.md) · [RUST](RUST.md)
+[GAP-AUDIT](GAP-AUDIT.md) · [COMPLETION](COMPLETION.md) · [AGENT-RECIPE](AGENT-RECIPE.md) · [NEXT](NEXT.md) · [PUSH](PUSH.md) · [MCP-TOOLS](MCP-TOOLS.md) · [ENGINE](ENGINE.md) · [RUST](RUST.md)
