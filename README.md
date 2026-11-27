@@ -1,10 +1,10 @@
 # Antelope MPC, without a mainnet signer
 
 > **Status:** educational reference for **agentic payments** on Antelope. **Unaudited.**  
-> Default gate: **WAX Testnet** + **Jungle 4**. Operators may open more *testnets* via `extraLabChainIds`. **Mainnets hard-refused.**  
-> **No threshold WASM signing** (engine mock only; `sign()` throws).  
-> **No HTTP by default** — lab `get_info` / `push_transaction` require explicit `enableNetwork` + readiness gates ([docs/PUSH.md](docs/PUSH.md)).  
-> **Map:** [docs/INDEX.md](docs/INDEX.md) · **Done vs remains:** [docs/GAP-AUDIT.md](docs/GAP-AUDIT.md) · **Checklist:** [docs/COMPLETION.md](docs/COMPLETION.md)
+> **Two modes:** testnet lab (policy → simulate → gated push) · **mainnet human-sign** (skills + unsigned ESR handoff).  
+> Default gate: **WAX Testnet** + **Jungle 4**. **Mainnets hard-refused for agent push.**  
+> **No threshold WASM signing** (`sign()` throws). **No model-fired HTTP push.**  
+> **Map:** [docs/INDEX.md](docs/INDEX.md) · [docs/EXECUTION-MODES.md](docs/EXECUTION-MODES.md) · [docs/GAP-AUDIT.md](docs/GAP-AUDIT.md)
 
 Antelope already has a way to rotate a key without moving assets: the account is a **name**, and `eosio::updateauth` changes who may act for it. Threshold ECDSA still matters because a single `SIG_K1_` / `SIG_R1_` hides the signer set. It does **not** replace cold owner multisig.
 
@@ -16,108 +16,68 @@ npm test && npm run check-skills
 cargo test -p antelope-crypto-format
 ```
 
-### Agent path (today)
+### Testnet agent path
 
 ```ts
-import {
-  listStrategiesTool,
-  runStrategyTool,
-  listEnginesTool,
-  simulateProposal,
-} from "./src/mcp.js";
-import { runStrategyWithPolicy } from "./src/strategies.js";
-import { CHAINS } from "./src/digest.js";
+import { listStrategiesTool, runStrategyTool, listEnginesTool } from "./src/mcp.js";
 
 listStrategiesTool({ expect: "allow" });
-// four default allows: wax-testnet-tip, treasury-tip, jungle-tip, peer-tip
 runStrategyTool("wax-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000));
-
-// operator-only extra testnet + recoverable lab SIG_K1_ (not node-pushable)
-runStrategyWithPolicy("telos-testnet-tip", "agent.pxj", Math.floor(Date.now() / 1000), {
-  extraLabChainIds: [CHAINS.telosTestnet],
-});
-
 listEnginesTool(); // educational-mock only until Phase R.2
 ```
 
-### Optional lab network (explicit)
+### Mainnet human-sign path (no keys in the model)
 
 ```ts
-import { fetchLabChainInfo, pushLabTransaction } from "./src/labClient.js";
+import { buildUnsignedHandoffTool } from "./src/mcp.js";
 import { CHAINS } from "./src/digest.js";
 
-await fetchLabChainInfo(CHAINS.waxTestnet, { enableNetwork: true });
-
-// push only when readiness is honest (real digest, dry-run, operator opt-in)
-await pushLabTransaction(
-  {
-    chainId: CHAINS.waxTestnet,
-    transaction: packedSignedTxObject,
-    readiness: {
-      policyAllowed: true,
-      signedAntelopeDigest: true, // must NOT be a lab proposal-id signature
-      dryRunOk: true,
-      operatorOptsIntoPush: true,
+const handoff = buildUnsignedHandoffTool({
+  chainId: CHAINS.waxMainnet,
+  summary: "Tip treasury 1 WAX",
+  actions: [
+    {
+      account: "eosio.token",
+      name: "transfer",
+      authorization: [{ actor: "human.wam", permission: "active" }],
+      data: {
+        from: "human.wam",
+        to: "treasury.pxj",
+        quantity: "1.00000000 WAX",
+        memo: "human-sign",
+      },
     },
-  },
-  { enableNetwork: true },
-);
+  ],
+});
+// handoff.esrUri is educational — re-encode with @wharfkit/signing-request for production
 ```
 
-Push is **not** an MCP tool (models should not fire broadcast). See [docs/PUSH.md](docs/PUSH.md).
+### Optional lab push (explicit, testnet only)
+
+```ts
+import { pushLabTransaction } from "./src/labClient.js";
+// readiness: policy + real Antelope digest + dry-run + operatorOptsIntoPush + enableNetwork
+```
+
+## Skills
+
+| Pack | Skills |
+| --- | --- |
+| Agent / MPC | `antelope-agent-propose`, `antelope-agentic-payments`, `antelope-network-scope`, `antelope-mpc-sig-format`, `mpc-security-audit`, `antelope-next-step` |
+| Mainnet protocol | `antelope-powerup-and-resources`, `antelope-atomicassets`, `antelope-atomicmarket`, `antelope-alcor-defi`, `antelope-permissions-and-msig`, `antelope-chain-profiles` |
 
 ## What `npm test` covers
 
-| Area | Modules |
-| --- | --- |
-| K1 `is_canonical`, low-S + recid flip | `canonical.ts` |
-| PUB_/SIG_ codecs | `codec.ts` |
-| Jungle 4 / chain digests + shared vectors | `digest.ts`, `testdata/vectors.json` |
-| WharfKit **4.0.2** recovery | `wharfkit.test.ts` |
-| Policy + strategies + operator opt-in | `policy.ts`, `strategies.ts` |
-| Presign queue (r-filter, burn) | `presign.ts` |
-| Offline compute fixtures | `simulate.ts` |
-| Lab client gates | `labClient.ts` |
-| MCP tools (10) | `mcp.ts` |
-| Attack museum + engine mock | `museum.ts`, `threshold.ts` |
-| Skills frontmatter / secrets | `scripts/check-skills.mjs` |
+K1 canonical, codecs, digests, WharfKit 4.0.2, policy/strategies, presign, simulate, lab client, **MCP (11 tools)**, museum, threshold mock, **unsigned handoff**, skills linter.
 
-**What it does not prove:** real DKLs23/CGGMP24 ceremonies, audited mainnet custody, or that a lab `SIG_K1_` is accepted by nodeos.
-
-## Read in this order
-
-Full map: [docs/INDEX.md](docs/INDEX.md).
-
-| Doc | What it is |
-| --- | --- |
-| [docs/DECIDE.md](docs/DECIDE.md) | Stop conditions before a proposal |
-| [EDUCATION.md](EDUCATION.md) | Course spine |
-| [docs/TODAY.md](docs/TODAY.md) | Callable surface right now |
-| [docs/AGENT-RECIPE.md](docs/AGENT-RECIPE.md) | Full agent loop |
-| [docs/GAP-AUDIT.md](docs/GAP-AUDIT.md) | Done vs remains |
-| [docs/COMPLETION.md](docs/COMPLETION.md) | Educational vs production definition of done |
-| [docs/PUSH.md](docs/PUSH.md) | Gated lab sender |
-| [docs/ENGINE.md](docs/ENGINE.md) | Threshold engine registry |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Hybrid thesis |
-| [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) | In / out of scope |
+**Does not prove:** real DKLs23/CGGMP24, audited mainnet custody, production ESR binary codec, or that a lab `SIG_K1_` is accepted by nodeos.
 
 ## Engines
 
 | Engine | Status |
 | --- | --- |
-| `educational-mock` | Available — DKG/presign tokens; **`sign()` throws** |
-| DKLs23 / CGGMP24 WASM | **Phase R.2** — named in registry, not imported |
-
-License firewall: [deny.toml](deny.toml) blocks `rug` / GMP / `cggmp21`. AGPL and non-commercial DKLs trees stay out. See [docs/LICENSES.md](docs/LICENSES.md).
-
-## Lab chain ids (default)
-
-| Network | Chain id |
-| --- | --- |
-| WAX Testnet | `f16b1833c747c43682f4386fca9cbb327929334a762755ebec17f6f23c9b8a12` |
-| Jungle 4 | `73e4385a2708e6d7048834fbc1079f2fabb17b3c125b146af438971e90716c4d` |
-
-WharfKit **4.0.2**. Naive K1 canonical failure rate (uniform-byte model): **~75.202%**.
+| `educational-mock` | DKG/presign tokens; **`sign()` throws** |
+| DKLs23 / CGGMP24 WASM | **Phase R.2** — named only |
 
 ## Related courses
 
