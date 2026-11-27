@@ -114,7 +114,7 @@ export const MCP_TOOL_SPECS: readonly McpToolSpec[] = [
   {
     name: "build_unsigned_handoff",
     description:
-      "Mainnet-safe: build unsigned action handoff + educational ESR URI for human Anchor/msig/hardware. Never signs or pushes.",
+      "Mainnet-safe unsigned handoff. eosio.token::transfer becomes a real esr:// (WharfKit 4.0.2). Never signs or pushes.",
     canProduceLabSignature: false,
   },
 ];
@@ -242,7 +242,7 @@ export function buildUnsignedHandoffTool(input: {
   chainId: string;
   actions: UnsignedAction[];
   summary: string;
-}): UnsignedHandoff {
+}): Promise<UnsignedHandoff> {
   return buildUnsignedHandoff({
     ...input,
     allowMainnetHandoff: true,
