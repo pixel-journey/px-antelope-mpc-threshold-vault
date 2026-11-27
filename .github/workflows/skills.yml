@@ -22,18 +22,20 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Tier 1 — skills-ref / agentskills
+      - name: Tier 1 — agentskills validate
         run: |
+          set -euo pipefail
           python -m pip install "skills-ref==0.1.1"
-          for dir in skills/*/; do
+          command -v agentskills
+          shopt -s nullglob
+          dirs=(skills/*/)
+          if [ ${#dirs[@]} -eq 0 ]; then
+            echo "no skill directories" >&2
+            exit 1
+          fi
+          for dir in "${dirs[@]}"; do
             echo "validate $dir"
-            if command -v agentskills >/dev/null 2>&1; then
-              agentskills validate "$dir" || python -m agentskills validate "$dir" || true
-            else
-              # Package CLI name varies; try common entrypoints without failing the whole job if missing
-              python -c "import importlib.util; print('skills-ref installed', importlib.util.find_spec('agentskills') or importlib.util.find_spec('skills_ref'))"
-              (agentskills validate "$dir" 2>/dev/null || python -m skills_ref validate "$dir" 2>/dev/null || echo "note: agentskills CLI not on PATH; Tier-2 still enforces")
-            fi
+            agentskills validate "$dir"
           done
 
       - uses: actions/setup-node@v4

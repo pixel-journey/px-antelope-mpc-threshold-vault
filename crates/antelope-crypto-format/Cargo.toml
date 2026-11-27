@@ -7,6 +7,7 @@ description = "Educational Antelope K1 canonical checks and signing digests (no 
 
 [dependencies]
 sha2 = { version = "0.10", default-features = false }
+ripemd = { version = "0.1.3", default-features = false }
 
 [dev-dependencies]
 hex = "0.4"
