@@ -8,16 +8,18 @@ See [K1-CANONICAL.md](K1-CANONICAL.md). Offline r-filter + low-S + `recid ^= 1` 
 
 ## Cards
 
-| ID | References | Root cause | Mandatory fix | Repo invariant |
-| --- | --- | --- | --- | --- |
-| alpha-rays | ePrint 2021/1621 | MtA range / small Paillier modulus | Range proofs, large N, MtAwc binding | No Paillier engine |
-| bitforge-gg | CVE-2023-33241 | Smooth Paillier modulus | Blum + no-small-factors proofs | Documented only |
-| bitforge-lindell | CVE-2023-33242 | Non-compliant abort leaks bits | Spec-accurate aborts | No Lindell17 |
-| tssshock-transcript | CVE-2022-47931 / 26556 | Ambiguous FS delimiters; weak DLN k | Length prefixes; k ≥ 80–128 | `taggedHash` / `$` collision demo |
-| nonce-reuse | Classical HNP | Reused ephemeral k | CSPRNG only; never chain entropy | `recoverFromReusedNonce` |
-| cggmp-66016 | CVE-2025-66016 | Missing Jacobi in aux keygen | cggmp24 ≥ 0.7.0-alpha.2 when engines land | Ban cggmp21 in deny.toml |
-| cggmp-66017 | CVE-2025-66017 | Presign + raw digest / HD misuse | Type guards; no `sign_digest` tool | MCP + hygiene |
-| ops-ai-bypass | Custody & agent incidents | No crypto break required | Independent shares; linkauth; policy | Gate + readiness; no free recipients |
+| ID | References | Extraction | Root cause | Mandatory fix | Repo invariant |
+| --- | --- | --- | --- | --- | --- |
+| alpha-rays | ePrint 2021/1621 | One signature | Small Paillier modulus / missing MtA range proof | N at least q^8; prover bound q^2, verifier q^3; MtAwc point binding | No Paillier engine |
+| bitforge-gg | CVE-2023-33241 | About 16 signatures | Smooth modulus, about 2^16 factors | Paillier-Blum and primes above 2^256 | Documented only |
+| bitforge-lindell | CVE-2023-33242 | About 1 bit per failed request | Abort path not paper-compliant | Spec-accurate aborts; leave Lindell17 | No Lindell17 |
+| tssshock-transcript | CVE-2022-47931 / CVE-2023-26556 | `$` collision; DLN k=1 is about 50% | Ambiguous Fiat-Shamir join; too few DLN rounds | Length prefix; k at least 80 | `taggedHash` and `$` demo |
+| nonce-reuse | Classical HNP | Two signatures | Reused ephemeral k | CSPRNG only; never chain entropy | `recoverFromReusedNonce` |
+| safe-prime-dln | KS-BTL-F-03 | Pohlig-Hellman on a smooth order | Generic RSA primes | Safe primes only | No DLN code |
+| cggmp-66016 | CVE-2025-66016 | Malicious-signer key recovery | Missing Jacobi check in aux keygen | cggmp24 at least 0.7.0-alpha.2 if an engine is ever added | `deny.toml` bans `cggmp21` |
+| cggmp-66017 | CVE-2025-66017 | Forgery on a known R; HD security drops | Presign plus raw digest, or presign plus BIP-32 | No `sign_digest` tool; no insecure preimage flag | MCP + hygiene |
+| audit-pq-2026 | CBS-02-004; Bron Oct 2026; ia.cr/2026/1386 | Subgroup skip, operand swap, TALUS v1 leakage | Missing subgroup checks; non-hiding lattice commitments | Subgroup checks; rotation caps | No PQ engine; [POST-QUANTUM.md](POST-QUANTUM.md) |
+| ops-ai-bypass | Multichain; Web3Auth/Keplr; Freysa; AIXBT; TDX | Often no crypto break | Shared host, SSO custody, prompt injection, forged TEE | Independent shares; passkey PRF; linkauth; TEE is one share below t | Gate + readiness |
 
 ### Executable demos
 
@@ -43,6 +45,21 @@ x = r^{-1}(s_1 k - m_1) \bmod n
 \\]
 
 Never seed MPC nonces from tx/block hashes or `orng.wax` ([ENTROPY.md](ENTROPY.md)).
+
+Reported dollar figures for the operational incidents are third-party writeups. This course does not re-verify them. The invariant is the control, not the headline number.
+
+## Parameters the papers name
+
+| Card | What to enforce if an engine is ever added |
+| --- | --- |
+| Alpha-Rays | Paillier N at least q^8. MtA range proof: prover bound q^2, verifier bound q^3. Bind the EC point in MtAwc. |
+| BitForge GG | Reject a smooth modulus. Require a Paillier-Blum proof and a no-small-factors proof (primes above 2^256) before any MtA. |
+| BitForge Lindell | Abort exactly as the paper does. Do not ship Lindell17 as the lab engine. |
+| TSSHOCK | Injective length prefix (8-byte little-endian or an equivalent tagged digest). Domain-separate the transcript. DLN soundness repetitions at least 80, preferably 128. k = 1 is a coin flip. |
+| Safe primes | DLN / Pedersen groups use p = 2q + 1 only. |
+| CVE-2025-66016 | The omitted check is the Jacobi symbol J(w, N) = -1 in the Paillier-Blum aux proof (CGGMP21 Fig. 16). The named fix lineage is cggmp24 at least 0.7.0-alpha.2. |
+| CVE-2025-66017 | Do not sign a raw prehash with a presignature, and do not combine presignatures with BIP-32 the way that drops a 128-bit target toward 85 bits. This repo has no `sign_digest` tool. |
+| 2026 audits | Subgroup membership on refresh (CBS-02-004). Do not panic on a peer's bytes; do not swap Lindell17 DKG operands (Bron). TALUS v1 lattice commitments are not hiding (ia.cr/2026/1386) — rotation caps, no PQ engine here. |
 
 ## Simulation is not inclusion
 

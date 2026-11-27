@@ -3,6 +3,7 @@
  * Tier-2 Px skills linter (zero dependency).
  * Tier-1 remains skills-ref / agentskills validate in CI.
  */
+import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 
@@ -89,6 +90,29 @@ for (const dir of listSkillDirs()) {
   for (const f of walkFiles(dir)) {
     const content = readFileSync(f, "utf8");
     if (SECRET_RE.test(content)) fail(`${relative(ROOT, f)}: possible private key / secret pattern`);
+  }
+
+  const scriptsDir = join(dir, "scripts");
+  if (existsSync(scriptsDir) && statSync(scriptsDir).isDirectory()) {
+    for (const f of walkFiles(scriptsDir)) {
+      let cmd = null;
+      let args = [];
+      if (f.endsWith(".mjs") || f.endsWith(".js")) {
+        cmd = process.execPath;
+        args = [f];
+      } else if (f.endsWith(".py")) {
+        cmd = "python3";
+        args = [f];
+      } else if (f.endsWith(".sh")) {
+        cmd = "bash";
+        args = [f];
+      }
+      if (!cmd) continue;
+      const result = spawnSync(cmd, args, { stdio: "inherit" });
+      if (result.status !== 0) {
+        fail(`${relative(ROOT, f)}: verification script exited ${result.status}`);
+      }
+    }
   }
 }
 

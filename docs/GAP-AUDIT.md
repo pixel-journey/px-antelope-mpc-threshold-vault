@@ -15,12 +15,12 @@ Public one-liners (“No threshold signing. No broadcast. Unaudited.”) are sti
 | Offline `compute_transaction` fixtures | **Done** (`simulate.ts`) |
 | MCP tools (10) | **Done** |
 | Attack museum + structured CVE cards | **Done** |
-| Agent skills (5) + Tier-2 linter + CI | **Done** |
+| Agent skills (6) + two-tier CI (`agentskills` + `check-skills.mjs`) | **Done** |
 | Push **curriculum** + **gated** lab sender | **Done** (`evaluatePushReadiness`, `pushLabTransaction`) |
 | Opt-in lab `get_info` | **Done** |
 | Push as MCP tool | **Intentionally omitted** |
-| R.1 Rust `antelope-crypto-format` + `deny.toml` | **Done** |
-| Shared `testdata/vectors.json` | **Done** |
+| R.1 Rust format crate (`PUB_*`, `SIG_*`, K1/R1 canonical, low-S) + `deny.toml` | **Done** |
+| Shared `testdata/vectors.json` Vectors 1–4 | **Done** |
 | `ThresholdEngine` registry + mock | **Done** (`sign` throws) |
 | Real DKLs23 / CGGMP24 WASM (R.2) | **Not started** |
 | Live WharfKit WalletPlugin registration | Stub / refuse paths only |

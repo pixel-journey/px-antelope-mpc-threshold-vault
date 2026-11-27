@@ -12,5 +12,25 @@
     "bothTotal": 262144,
     "bothFail": 197119
   },
-  "note": "Shared by TypeScript course tests and crates/antelope-crypto-format. No threshold signing."
+  "vector1": {
+    "compressed": "02be7f725859754433991eca4c0af042d6d7ef1cf99605f3d7037623d3839c46d5",
+    "pubK1": "PUB_K1_6LPN8xGye86wme4PwqN8TSxAfGTQvqBcN5jGnURJPHyqn3a973",
+    "pubR1": "PUB_R1_6LPN8xGye86wme4PwqN8TSxAfGTQvqBcN5jGnURJPHyqn9uLao",
+    "legacyEos": "EOS6LPN8xGye86wme4PwqN8TSxAfGTQvqBcN5jGnURJPHyqnXqNAR"
+  },
+  "vector2": {
+    "digest": "5206a2e62f2e1235dba4e991b830fb3106fa3531015446cafc3817c65a6b73e7",
+    "sigK1": "SIG_K1_KZ2Rnnqgmv6soS8ZrUE5EvkQpV2f3BuArCDpbthokgzGJk6j8PmJnk4NSNtN1ANLrL16XgJfEbTgXjvyxwxZYBZyiwMVNh",
+    "recoveredPubK1": "PUB_K1_5AWABL23YzbJad4gNKGYi23Y6uTrxqYoTkSbJdzwenwfjw84eW"
+  },
+  "vector3": {
+    "note": "Same packed transaction as jungle4. WharfKit recovers the key; this file locks the strings.",
+    "sigK1": "SIG_K1_KcgeV43BeK7cuCz4ywZGZGnnE21f7TAJaVfGFVG2KPNtH9yFwphvzbLchycFE4ryXTo1bu2ethLi2iFQR5aHUmjiVrTAM3",
+    "recoveredPubK1": "PUB_K1_6RrvujLQN1x5Tacbep1KAk8zzKpSThAQXBCKYFfGUYeACcSRFs"
+  },
+  "vector4": {
+    "sigR1": "SIG_R1_KKd9ErxRrbtcksVrCHpF1FefXqC7eo85sU1niggQkThAfYgBt3DSFzcoeFC37sCetJPnMt9PVpfSYWeXJbk9fbNMfoVHCL",
+    "recoveredPubR1": "PUB_R1_7WVsSeomUhZL8FFHZWTLjBNJPxYuvEjjxuQRAq8hVaq768i8Wa"
+  },
+  "note": "Shared by TypeScript (WharfKit 4.0.2) and crates/antelope-crypto-format. Format parity only in Rust — no key recovery, no threshold signing."
 }

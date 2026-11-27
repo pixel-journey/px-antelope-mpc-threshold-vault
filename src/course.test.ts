@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { CANONICAL_COUNTS, countCanonicalFirstTwoBytes, normalizeLowS, signatureIsCanonicalK1, SECP256K1_N } from "./canonical.js";
+import { CANONICAL_COUNTS, countCanonicalFirstTwoBytes, normalizeLowS, signatureIsCanonicalK1, signatureIsCanonicalR1, SECP256K1_N } from "./canonical.js";
 import { formatPublicKey, VECTOR1_LEGACY, VECTOR1_POINT, VECTOR1_PUB_K1 } from "./codec.js";
 import { JUNGLE4_PACKED_TX, JUNGLE4_SIG_DIGEST, JUNGLE4_TX_ID, sigDigest, txId, CHAINS } from "./digest.js";
 import { findBannedSnippets } from "./hygiene.js";
@@ -24,6 +24,20 @@ describe("K1 canonical bytes", () => {
     good[33] = 0x40;
     good[34] = 0x01;
     expect(signatureIsCanonicalK1(good)).toBe(true);
+  });
+
+  it("lets R1 skip the K1 byte check and still require low-S", () => {
+    const highBitR = new Uint8Array(65);
+    highBitR[0] = 31;
+    highBitR[1] = 0x80;
+    highBitR[33] = 0x01;
+    expect(signatureIsCanonicalK1(highBitR)).toBe(false);
+    expect(signatureIsCanonicalR1(highBitR)).toBe(true);
+    const highS = new Uint8Array(65);
+    highS[0] = 31;
+    highS[1] = 0x40;
+    highS[33] = 0xff;
+    expect(signatureIsCanonicalR1(highS)).toBe(false);
   });
 
   it("flips recid when s is above n/2", () => {

@@ -29,6 +29,21 @@ export function signatureIsCanonicalK1(sig65: Uint8Array): boolean {
 }
 
 /**
+ * R1 does not use the K1 first-two-byte rule (EOSIO/eos#6699).
+ * A compact R1 signature is canonical here when the header is 31..34
+ * and s is in 1..n/2. A high bit on r is allowed.
+ */
+export function signatureIsCanonicalR1(sig65: Uint8Array): boolean {
+  if (sig65.length !== 65) {
+    throw new Error("R1 compact signature is 65 bytes");
+  }
+  const header = sig65[0]!;
+  if (header < 31 || header > 34) return false;
+  const s = BigInt(`0x${Buffer.from(sig65.subarray(33)).toString("hex")}`);
+  return s > 0n && s <= SECP256K1_N >> 1n;
+}
+
+/**
  * Uniform independent bytes, not integers reduced modulo the curve order.
  * That model is what the published 75.20% rejection figure is counting.
  *

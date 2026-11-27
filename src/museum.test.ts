@@ -32,8 +32,20 @@ describe("attack museum demos", () => {
 
   it("exports structured cards including 2025 CVEs", () => {
     const ids = MUSEUM_CARDS.map((c) => c.id);
-    expect(ids).toContain("cggmp-66016");
-    expect(ids).toContain("nonce-reuse");
+    for (const id of [
+      "alpha-rays",
+      "bitforge-gg",
+      "bitforge-lindell",
+      "tssshock-transcript",
+      "nonce-reuse",
+      "safe-prime-dln",
+      "cggmp-66016",
+      "cggmp-66017",
+      "audit-pq-2026",
+      "ops-ai-bypass",
+    ]) {
+      expect(ids).toContain(id);
+    }
     expect(MUSEUM_CARDS.every((c) => c.mandatoryFix && c.repoInvariant)).toBe(true);
   });
 });
